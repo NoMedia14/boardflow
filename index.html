@@ -3,15 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BoardFlow - Mit Erledigt & PDF Fix</title>
+    <title>BoardFlow - Persistent Login & PDF Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged,
+            setPersistence,
+            browserLocalPersistence
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            query, 
+            where, 
+            onSnapshot, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAxBCBta8uZgk-5sJx3ExoJxW1tc2I9240",
@@ -26,7 +45,15 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        window.firebaseApp = { auth, db, serverTimestamp, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+        // WICHTIG: Persistence auf LocalStorage setzen für dauerhaften Login
+        await setPersistence(auth, browserLocalPersistence);
+        
+        window.firebaseApp = { 
+            auth, db, serverTimestamp, collection, doc, addDoc, 
+            updateDoc, deleteDoc, query, where, onSnapshot, 
+            createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+            signOut, onAuthStateChanged 
+        };
     </script>
     
     <style>
@@ -172,7 +199,7 @@
     <div class="auth-container" id="authScreen">
         <div class="auth-box">
             <h2><i class="fas fa-shield-alt"></i> BoardFlow</h2>
-            <p>Sicher verwaltet mit Firebase</p>
+            <p>Sicher verwaltet mit Firebase<br><small>(Bleibt eingeloggt)</small></p>
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchTab('login')">Anmelden</button>
                 <button class="auth-tab" onclick="switchTab('register')">Registrieren</button>
@@ -265,10 +292,10 @@
 
         <div class="batch-actions" id="batchActions">
             <span id="batchCount">0 ausgewählt</span>
-            <button onclick="exportSelectedPDFs()"><i class="fas fa-file-pdf"></i> PDF Export</button>
-            <button onclick="deleteSelected()" style="background:#ff6b6b"><i class="fas fa-trash"></i> Löschen</button>
-            <button onclick="markSelectedCompleted()" style="background:#28a745"><i class="fas fa-check"></i> Erledigt</button>
-            <button onclick="clearSelection()" style="background:#6c757d">Abbrechen</button>
+            <button onclick="exportSelectedPDFs()"><i class="fas fa-file-pdf"></i> PDF</button>
+            <button onclick="deleteSelected()" style="background:#ff6b6b"><i class="fas fa-trash"></i></button>
+            <button onclick="markSelectedCompleted()" style="background:#28a745"><i class="fas fa-check"></i></button>
+            <button onclick="clearSelection()" style="background:#6c757d">X</button>
         </div>
     </div>
 
@@ -332,7 +359,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-danger-sm" onclick="deleteTodo()" id="deleteTodoBtn" style="display:none;margin-right:auto"><i class="fas fa-trash"></i> Löschen</button>
+                <button class="btn-danger-sm" onclick="deleteTodo()" id="deleteTodoBtn" style="display:none;margin-right:auto"><i class="fas fa-trash"></i></button>
                 <button class="btn-app btn-secondary" onclick="exportCurrentTodoPDF()" style="background:#ff6b6b;color:#fff"><i class="fas fa-file-pdf"></i> PDF</button>
                 <button class="btn-app btn-secondary" onclick="closeModal('todoModal')">Abbrechen</button>
                 <button class="btn-app btn-success" onclick="saveTodo()">Speichern</button>
@@ -348,10 +375,15 @@
         <iframe id="pdfFrame"></iframe>
     </div>
 
+    <!-- PDF Template (hidden but rendered) -->
+    <div id="pdfTemplate" style="position:absolute;left:-9999px;top:0;width:794px;background:white;padding:40px;font-family:Arial,sans-serif;">
+        <div id="pdfContent"></div>
+    </div>
+
     <script type="module">
         await new Promise(resolve => {
             if (window.firebaseApp) resolve();
-            else setTimeout(resolve, 500);
+            else setTimeout(resolve, 1000);
         });
         
         const { auth, db, serverTimestamp, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } = window.firebaseApp;
@@ -366,6 +398,7 @@
         let selectedTodos = new Set();
         let unsubscribe = null;
 
+        // Auth State Listener - bleibt jetzt dauerhaft eingeloggt!
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
@@ -403,6 +436,7 @@
             loading.classList.add('active');
             try {
                 await signInWithEmailAndPassword(auth, email, password);
+                // Session bleibt jetzt dauerhaft gespeichert!
             } catch (error) {
                 alert('Login fehlgeschlagen: ' + error.message);
                 btn.disabled = false;
@@ -433,7 +467,12 @@
             }
         };
 
-        window.logout = () => signOut(auth);
+        window.logout = async () => {
+            if (confirm('Möchtest du dich wirklich abmelden?')) {
+                await signOut(auth);
+                // Erst nach explizitem Logout wird die Session gelöscht
+            }
+        };
 
         async function createDefaultBoards() {
             const defaultBoards = [
@@ -458,7 +497,6 @@
                 snapshot.forEach(doc => {
                     boards.push({ id: doc.id, ...doc.data() });
                 });
-                // Automatische Bereinigung alter erledigter Todos (30 Tage)
                 await cleanupOldCompletedTodos();
                 render();
             });
@@ -480,7 +518,7 @@
                     if (diffDays <= 30) {
                         validCompleted.push(todo);
                     } else {
-                        needsUpdate = true; // Markiert zum Löschen (wird nicht mehr ins Array aufgenommen)
+                        needsUpdate = true;
                     }
                 }
                 
@@ -509,7 +547,7 @@
             boards.filter(b => b.section === 'ideas').forEach(b => ideas.appendChild(createBoardEl(b)));
             boards.filter(b => b.section === 'notes').forEach(b => notes.appendChild(createBoardEl(b)));
             
-            // Erledigte Todos aus allen Boards sammeln
+            // Erledigte Todos
             const allCompletedTodos = [];
             boards.forEach(board => {
                 if (board.completedTodos) {
@@ -553,7 +591,7 @@
                 completed.appendChild(completedBoard);
             }
             
-            // Papierkorb (3 Tage)
+            // Papierkorb
             const allDeletedTodos = [];
             boards.forEach(board => {
                 if (board.deletedTodos) {
@@ -664,13 +702,7 @@
 
         function formatTextForDisplay(text) {
             if (!text) return '';
-            let formatted = text
-                .replace(/<ul>/g, '<ul style="margin-left:1.2rem;list-style-type:disc">')
-                .replace(/<ol>/g, '<ol style="margin-left:1.2rem;list-style-type:decimal">')
-                .replace(/<li>/g, '<li style="margin:0.25rem 0">')
-                .replace(/<strong>/g, '<strong style="font-weight:600">')
-                .replace(/<em>/g, '<em style="font-style:italic">');
-            return formatted;
+            return text;
         }
 
         window.toggleTodoSelection = (boardId, index, checked) => {
@@ -703,7 +735,6 @@
 
         window.markSelectedCompleted = async () => {
             if (!confirm(`${selectedTodos.size} Todos als erledigt markieren?`)) return;
-            
             for (const key of Array.from(selectedTodos)) {
                 const [boardId, index] = key.split('-');
                 await markCompleted(boardId, parseInt(index));
@@ -726,10 +757,7 @@
                 completedAt: new Date().toISOString()
             });
             
-            await updateDoc(doc(db, 'boards', boardId), { 
-                todos, 
-                completedTodos 
-            });
+            await updateDoc(doc(db, 'boards', boardId), { todos, completedTodos });
         };
 
         window.uncompleteTodo = async (boardId, index) => {
@@ -741,20 +769,13 @@
             completedTodos.splice(index, 1);
             
             const todos = [...(board.todos || [])];
-            todos.push({
-                ...todo,
-                restoredFromCompleted: new Date().toISOString()
-            });
+            todos.push({...todo, restoredFromCompleted: new Date().toISOString()});
             
-            await updateDoc(doc(db, 'boards', boardId), { 
-                todos, 
-                completedTodos 
-            });
+            await updateDoc(doc(db, 'boards', boardId), { todos, completedTodos });
         };
 
         window.deleteSelected = async () => {
             if (!confirm(`${selectedTodos.size} Todos wirklich löschen?`)) return;
-            
             for (const key of Array.from(selectedTodos)) {
                 const [boardId, index] = key.split('-');
                 await moveToTrash(boardId, parseInt(index));
@@ -772,15 +793,9 @@
             todos.splice(index, 1);
             
             const deletedTodos = [...(board.deletedTodos || [])];
-            deletedTodos.push({
-                ...deletedTodo,
-                deletedAt: new Date().toISOString()
-            });
+            deletedTodos.push({...deletedTodo, deletedAt: new Date().toISOString()});
             
-            await updateDoc(doc(db, 'boards', boardId), { 
-                todos, 
-                deletedTodos 
-            });
+            await updateDoc(doc(db, 'boards', boardId), { todos, deletedTodos });
         }
 
         window.quickDeleteTodo = async (boardId, index) => {
@@ -797,15 +812,9 @@
             deletedTodos.splice(index, 1);
             
             const todos = [...(board.todos || [])];
-            todos.push({
-                ...restoredTodo,
-                restoredAt: new Date().toISOString()
-            });
+            todos.push({...restoredTodo, restoredAt: new Date().toISOString()});
             
-            await updateDoc(doc(db, 'boards', boardId), { 
-                todos, 
-                deletedTodos 
-            });
+            await updateDoc(doc(db, 'boards', boardId), { todos, deletedTodos });
         };
 
         window.openBoardModal = () => {
@@ -876,7 +885,6 @@
 
         window.editTodo = (boardId, index) => {
             if (selectedTodos.size > 0) return;
-            
             const board = boards.find(b => b.id === boardId);
             const todo = board.todos[index];
             
@@ -931,7 +939,7 @@
             closeModal('todoModal');
         };
 
-        // KORRIGIERTER PDF EXPORT
+        // NEUE PDF FUNKTION - Robust und mit Inhalt
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
@@ -961,83 +969,84 @@
         };
 
         async function generatePDF(todos) {
-            // Temporären Container erstellen (sichtbar aber unsichtbar für den User)
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.left = '-9999px';
-            tempDiv.style.top = '0';
-            tempDiv.style.width = '210mm';
-            tempDiv.style.background = 'white';
-            document.body.appendChild(tempDiv);
-            
+            // Template holen
+            const template = document.getElementById('pdfTemplate');
+            const content = document.getElementById('pdfContent');
             const date = new Date().toLocaleString('de-DE');
             const userEmail = currentUser.email;
             
-            let pagesHtml = '';
+            let html = '';
+            
             todos.forEach((todo, idx) => {
-                // Strip HTML tags for plain text display in PDF but preserve basic formatting
-                const tempTextDiv = document.createElement('div');
-                tempTextDiv.innerHTML = todo.text;
-                const plainText = tempTextDiv.innerText || todo.text;
+                // HTML zu sauberem Text konvertieren für PDF
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = todo.text;
                 
-                // Convert HTML lists to simple text lists for PDF
-                let formattedText = todo.text
-                    .replace(/<\/li>/gi, '\n')
-                    .replace(/<li>/gi, '• ')
-                    .replace(/<\/p>/gi, '\n\n')
-                    .replace(/<br\s*\/?>/gi, '\n')
-                    .replace(/<[^>]+>/g, ''); // Remove remaining HTML tags
+                // Formatierung beibehalten aber sicher machen
+                let textContent = todo.text
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/style="[^"]*"/g, '');
                 
-                pagesHtml += `
-                    <div style="width:210mm;min-height:297mm;padding:20mm;background:#fff;font-family:Arial,Helvetica,sans-serif;box-sizing:border-box;page-break-after:always;position:relative;">
+                html += `
+                    <div style="page-break-after: always; padding: 40px; font-family: Arial, sans-serif; position: relative; min-height: 1000px;">
                         <!-- Header -->
-                        <div style="border-bottom:3px solid #667eea;padding-bottom:15px;margin-bottom:30px;text-align:center;">
-                            <h1 style="color:#667eea;font-size:32px;margin:0 0 8px 0;font-weight:700;">BoardFlow Todo</h1>
-                            <p style="color:#6c757d;font-size:12px;margin:0;">Export vom ${date}</p>
+                        <div style="text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 40px;">
+                            <h1 style="color: #667eea; font-size: 28px; margin: 0;">BoardFlow</h1>
+                            <p style="color: #6c757d; font-size: 12px; margin: 5px 0 0 0;">Todo Export</p>
                         </div>
                         
-                        <!-- Content Box -->
-                        <div style="background:#f8f9fa;border-radius:12px;padding:30px;margin-bottom:30px;border:2px solid #e9ecef;min-height:400px;">
-                            <div style="font-size:11px;color:#6c757d;margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Inhalt</div>
-                            <div style="font-size:14px;line-height:1.8;color:#212529;white-space:pre-wrap;">${escapeForPdf(formattedText)}</div>
-                            
-                            ${todo.attachments?.length ? `
-                                <div style="margin-top:25px;padding-top:20px;border-top:1px solid #dee2e6;">
-                                    <div style="font-size:11px;color:#6c757d;margin-bottom:8px;font-weight:600;">ANHÄNGE</div>
-                                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                                        ${todo.attachments.map(a => `
-                                            <span style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:#fff;border-radius:6px;font-size:12px;color:#495057;border:1px solid #dee2e6;">
-                                                <span style="color:${a.name.endsWith('.pdf') ? '#ff6b6b' : '#4ecdc4'}">●</span>
-                                                ${escapeForPdf(a.name)}
-                                            </span>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
+                        <!-- Meta Info -->
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px; font-size: 12px; color: #6c757d;">
+                            <strong>Board:</strong> ${todo.boardName} | 
+                            <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')} | 
+                            <strong>Export:</strong> ${date}
                         </div>
+                        
+                        <!-- Content -->
+                        <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 30px; min-height: 400px;">
+                            <div style="font-size: 14px; line-height: 1.8; color: #212529;">
+                                ${textContent}
+                            </div>
+                        </div>
+                        
+                        <!-- Attachments -->
+                        ${todo.attachments?.length ? `
+                            <div style="margin-top: 30px;">
+                                <p style="font-size: 11px; color: #6c757d; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Anhänge</p>
+                                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                    ${todo.attachments.map(a => `
+                                        <span style="background: #f8f9fa; padding: 8px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #dee2e6;">
+                                            ${a.name}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
                         
                         <!-- Footer -->
-                        <div style="position:absolute;bottom:20mm;left:20mm;right:20mm;display:flex;justify-content:space-between;align-items:center;padding-top:15px;border-top:2px solid #e9ecef;font-size:10px;color:#6c757d;">
-                            <div>
-                                <strong>Board:</strong> ${escapeForPdf(todo.boardName)}<br>
-                                <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')}
-                            </div>
-                            <div style="text-align:right;">
-                                <strong>Benutzer:</strong><br>
-                                ${userEmail}
-                            </div>
+                        <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #dee2e6; padding-top: 20px; font-size: 10px; color: #6c757d; display: flex; justify-content: space-between;">
+                            <span>Erstellt von: ${userEmail}</span>
+                            <span>Seite ${idx + 1} von ${todos.length}</span>
                         </div>
                     </div>
                 `;
             });
             
-            tempDiv.innerHTML = pagesHtml;
+            content.innerHTML = html;
             
-            // Warten bis DOM gerendert
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Sichtbar machen aber unsichtbar (für Rendering)
+            template.style.position = 'absolute';
+            template.style.left = '0';
+            template.style.top = '0';
+            template.style.opacity = '0.01';
+            template.style.zIndex = '-1000';
+            template.style.width = '794px'; // A4 Breite in px bei 96dpi
+            
+            // Warten auf Render
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
             try {
-                await html2pdf().from(tempDiv).set({
+                const opt = {
                     margin: 0,
                     filename: `BoardFlow-Export-${new Date().toISOString().split('T')[0]}.pdf`,
                     image: { type: 'jpeg', quality: 0.98 },
@@ -1048,27 +1057,24 @@
                         windowWidth: 1200
                     },
                     jsPDF: { 
-                        unit: 'mm', 
+                        unit: 'px', 
                         format: 'a4', 
-                        orientation: 'portrait'
+                        orientation: 'portrait',
+                        hotfixes: ['px_scaling']
                     }
-                }).save();
+                };
+                
+                await html2pdf().set(opt).from(template).save();
+                
             } catch (error) {
                 console.error('PDF Error:', error);
                 alert('PDF konnte nicht erstellt werden: ' + error.message);
             } finally {
                 // Cleanup
-                document.body.removeChild(tempDiv);
+                template.style.opacity = '0';
+                template.style.left = '-9999px';
+                content.innerHTML = '';
             }
-        }
-
-        function escapeForPdf(text) {
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
         }
 
         window.handleFile = (input) => {
