@@ -6,7 +6,6 @@
     <title>BoardFlow - PDF Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -58,6 +57,14 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529;-webkit-text-size-adjust:100%}
+        
+        /* Print Styles - Wichtig für PDF Export */
+        @media print {
+            @page { margin: 0; size: auto; }
+            body * { visibility: hidden; }
+            #printFrame, #printFrame * { visibility: visible; }
+            #printFrame { position: absolute; left: 0; top: 0; width: 100%; }
+        }
         
         .auth-container{position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;z-index:3000;padding:1rem}
         .auth-box{background:#fff;padding:1.5rem;border-radius:20px;width:100%;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,0.3)}
@@ -201,8 +208,8 @@
             .pdf-viewer-header span { max-width: 150px !important; font-size: 0.875rem; }
         }
         
-        /* PDF Template - wichtig: nicht mit display:none oder opacity:0 */
-        #pdfTemplate{position:absolute;left:-9999px;top:0;width:794px;background:white;padding:40px;font-family:Arial,sans-serif;visibility:hidden}
+        /* Hidden Print Frame */
+        #printFrame { position: absolute; left: -9999px; top: 0; width: 210mm; background: white; }
     </style>
 </head>
 <body>
@@ -403,10 +410,8 @@
         </div>
     </div>
 
-    <!-- PDF Template -->
-    <div id="pdfTemplate">
-        <div id="pdfContent"></div>
-    </div>
+    <!-- Hidden Container for Print to PDF -->
+    <div id="printFrame"></div>
 
     <script type="module">
         await new Promise(resolve => {
@@ -915,7 +920,7 @@
             closeModal('todoModal');
         };
 
-        // KORRIGIERTE PDF Funktionen
+        // NEUE ZUVERLÄSSIGE PDF FUNKTIONEN mit Browser Print
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
@@ -945,119 +950,87 @@
         };
 
         async function generatePDF(todos) {
-            // Loading State
-            const btn = document.querySelector('button[onclick="exportCurrentTodoPDF()"]');
-            let originalText = '';
-            if (btn) {
-                originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Erstelle...';
-                btn.disabled = true;
-            }
-
-            try {
-                const template = document.getElementById('pdfTemplate');
-                const content = document.getElementById('pdfContent');
-                const date = new Date().toLocaleString('de-DE');
-                const userEmail = currentUser ? currentUser.email : 'Unbekannt';
+            const printFrame = document.getElementById('printFrame');
+            const date = new Date().toLocaleString('de-DE');
+            const userEmail = currentUser ? currentUser.email : 'Unbekannt';
+            
+            let html = `
+                <html>
+                <head>
+                    <title>BoardFlow Export</title>
+                    <style>
+                        @page { size: A4; margin: 20mm; }
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .page { page-break-after: always; padding: 40px; position: relative; min-height: 100vh; box-sizing: border-box; }
+                        .page:last-child { page-break-after: auto; }
+                        .header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
+                        .header h1 { color: #667eea; font-size: 28px; margin: 0; }
+                        .meta { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px; font-size: 12px; color: #6c757d; }
+                        .content { background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 30px; min-height: 400px; font-size: 14px; }
+                        .content ul, .content ol { margin-left: 20px; }
+                        .attachments { margin-top: 30px; }
+                        .attachments-title { font-size: 11px; color: #6c757d; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+                        .attachment-tag { background: #f8f9fa; padding: 8px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #dee2e6; display: inline-block; margin-right: 5px; margin-bottom: 5px; }
+                        .footer { position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #dee2e6; padding-top: 20px; font-size: 10px; color: #6c757d; display: flex; justify-content: space-between; }
+                    </style>
+                </head>
+                <body>
+            `;
+            
+            todos.forEach((todo, idx) => {
+                // Sicheres HTML bereinigen
+                let textContent = todo.text
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
                 
-                // Template sichtbar machen (aber off-screen) für korrektes Rendering
-                template.style.visibility = 'visible';
-                template.style.position = 'absolute';
-                template.style.left = '-10000px';
-                template.style.top = '0';
-                template.style.opacity = '1';
-                template.style.width = '794px';
-                
-                let html = '';
-                
-                todos.forEach((todo, idx) => {
-                    // HTML bereinigen
-                    let textContent = todo.text
-                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                        .replace(/style="[^"]*"/g, '')
-                        .replace(/class="[^"]*"/g, '');
-                    
-                    html += `
-                        <div style="page-break-after: always; padding: 40px; font-family: Arial, sans-serif; position: relative; min-height: 1000px; background: white;">
-                            <div style="text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 40px;">
-                                <h1 style="color: #667eea; font-size: 28px; margin: 0;">BoardFlow</h1>
-                                <p style="color: #6c757d; font-size: 12px; margin: 5px 0 0 0;">Todo Export</p>
-                            </div>
-                            
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px; font-size: 12px; color: #6c757d;">
-                                <strong>Board:</strong> ${escapeHtml(todo.boardName)} | 
-                                <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')} | 
-                                <strong>Export:</strong> ${date}
-                            </div>
-                            
-                            <div style="background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 30px; min-height: 400px;">
-                                <div style="font-size: 14px; line-height: 1.8; color: #212529;">
-                                    ${textContent}
-                                </div>
-                            </div>
-                            
-                            ${todo.attachments?.length ? `
-                                <div style="margin-top: 30px;">
-                                    <p style="font-size: 11px; color: #6c757d; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Anhänge</p>
-                                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                        ${todo.attachments.map(a => `
-                                            <span style="background: #f8f9fa; padding: 8px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #dee2e6;">
-                                                ${escapeHtml(a.name)}
-                                            </span>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            
-                            <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #dee2e6; padding-top: 20px; font-size: 10px; color: #6c757d; display: flex; justify-content: space-between;">
-                                <span>Erstellt von: ${userEmail}</span>
-                                <span>Seite ${idx + 1} von ${todos.length}</span>
-                            </div>
+                html += `
+                    <div class="page">
+                        <div class="header">
+                            <h1>BoardFlow</h1>
+                            <p style="color: #6c757d; font-size: 12px; margin: 5px 0 0 0;">Todo Export</p>
                         </div>
-                    `;
-                });
-                
-                content.innerHTML = html;
-                
-                // Warten bis DOM gerendert ist
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                const opt = {
-                    margin: 0,
-                    filename: `BoardFlow-Export-${new Date().toISOString().split('T')[0]}.pdf`,
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { 
-                        scale: 2,
-                        useCORS: true,
-                        logging: true, // Debug aktivieren
-                        windowWidth: 1200,
-                        allowTaint: true
-                    },
-                    jsPDF: { 
-                        unit: 'px', 
-                        format: 'a4', 
-                        orientation: 'portrait',
-                        hotfixes: ['px_scaling']
-                    }
-                };
-                
-                // PDF generieren
-                await html2pdf().set(opt).from(template).save();
-                
-            } catch (error) {
-                console.error('PDF Error:', error);
-                alert('PDF Fehler: ' + error.message);
-            } finally {
-                // Cleanup
-                if (btn) {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-                const template = document.getElementById('pdfTemplate');
-                template.style.visibility = 'hidden';
-                template.style.left = '-9999px';
-                document.getElementById('pdfContent').innerHTML = '';
-            }
+                        
+                        <div class="meta">
+                            <strong>Board:</strong> ${escapeHtml(todo.boardName)} | 
+                            <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')} | 
+                            <strong>Export:</strong> ${date}
+                        </div>
+                        
+                        <div class="content">
+                            ${textContent}
+                        </div>
+                        
+                        ${todo.attachments?.length ? `
+                            <div class="attachments">
+                                <div class="attachments-title">Anhänge</div>
+                                <div>
+                                    ${todo.attachments.map(a => `
+                                        <span class="attachment-tag">${escapeHtml(a.name)}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="footer">
+                            <span>Erstellt von: ${userEmail}</span>
+                            <span>Seite ${idx + 1} von ${todos.length}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</body></html>';
+            
+            // In neues Fenster schreiben und drucken
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(html);
+            printWindow.document.close();
+            
+            // Warten bis Styles geladen sind
+            setTimeout(() => {
+                printWindow.print();
+                // Optional: Fenster schließen nach Druck (funktioniert nicht immer)
+                // printWindow.close();
+            }, 500);
         }
 
         window.handleFile = (input) => {
