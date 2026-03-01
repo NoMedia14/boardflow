@@ -2,13 +2,12 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BoardFlow - Firebase Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BoardFlow - Mobile Optimized</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { 
@@ -28,10 +27,10 @@
             query, 
             where, 
             onSnapshot,
-            serverTimestamp 
+            serverTimestamp,
+            getDoc 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 🔥 DEINE FIREBASE CONFIG (bereits eingetragen)
         const firebaseConfig = {
             apiKey: "AIzaSyAxBCBta8uZgk-5sJx3ExoJxW1tc2I9240",
             authDomain: "boardflow-9a92f.firebaseapp.com",
@@ -45,19 +44,20 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        window.firebaseApp = { auth, db, serverTimestamp, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
+        window.firebaseApp = { auth, db, serverTimestamp, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, getDoc, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged };
     </script>
     
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529}
+        body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529;-webkit-text-size-adjust:100%}
         
+        /* Mobile First Base Styles */
         .auth-container{position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;z-index:3000;padding:1rem}
-        .auth-box{background:#fff;padding:2.5rem;border-radius:20px;width:100%;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,0.3)}
-        .auth-box h2{margin-bottom:0.5rem;font-size:1.75rem;display:flex;align-items:center;gap:0.75rem}
+        .auth-box{background:#fff;padding:1.5rem;border-radius:20px;width:100%;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,0.3)}
+        .auth-box h2{margin-bottom:0.5rem;font-size:1.5rem;display:flex;align-items:center;gap:0.75rem}
         .auth-box h2 i{color:#667eea}
-        .auth-box p{color:#6c757d;margin-bottom:2rem;font-size:0.9375rem}
-        .auth-tabs{display:flex;gap:2rem;margin-bottom:2rem;border-bottom:2px solid #e9ecef}
+        .auth-box p{color:#6c757d;margin-bottom:1.5rem;font-size:0.875rem}
+        .auth-tabs{display:flex;gap:2rem;margin-bottom:1.5rem;border-bottom:2px solid #e9ecef}
         .auth-tab{padding:0.75rem 0;background:none;border:none;color:#6c757d;cursor:pointer;font-weight:600;font-size:0.9375rem;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s}
         .auth-tab.active{color:#667eea;border-bottom-color:#667eea}
         .auth-form{display:none}
@@ -65,7 +65,7 @@
         .input-group{margin-bottom:1.25rem}
         .input-group label{display:block;font-size:0.875rem;font-weight:600;margin-bottom:0.5rem;color:#495057}
         .input-group input{width:100%;padding:0.875rem 1rem;border:2px solid #e9ecef;border-radius:10px;font-size:0.9375rem;transition:all 0.2s}
-        .input-group input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.1)}
+        .input-group input:focus{outline:none;border-color:#667eea}
         .btn{width:100%;padding:1rem;border:none;border-radius:10px;font-size:0.9375rem;font-weight:600;cursor:pointer;transition:all 0.2s}
         .btn-primary{background:#667eea;color:#fff}
         .btn-primary:hover{background:#5568d3}
@@ -75,97 +75,140 @@
         
         .app{display:none}
         .app.active{display:block}
-        .header{background:#fff;padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;z-index:100}
-        .header-left,.header-right{display:flex;align-items:center;gap:1rem}
-        .header h1{font-size:1.5rem;font-weight:800}
-        .header h1 i{color:#667eea;margin-right:0.5rem}
-        .user-info{display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#6c757d}
-        .btn-app{padding:0.625rem 1.25rem;border-radius:8px;border:none;font-size:0.875rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:0.5rem;transition:all 0.2s}
+        
+        /* Header Mobile Optimized */
+        .header{background:#fff;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:0.5rem}
+        .header-left,.header-right{display:flex;align-items:center;gap:0.5rem}
+        .header h1{font-size:1.1rem;font-weight:800;margin:0}
+        .header h1 i{color:#667eea;margin-right:0.25rem}
+        .user-info{display:none}
+        .btn-app{padding:0.5rem 0.75rem;border-radius:8px;border:none;font-size:0.8125rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:0.25rem;white-space:nowrap}
         .btn-success{background:#667eea;color:#fff}
-        .btn-success:hover{background:#5568d3}
         .btn-secondary{background:#e9ecef;color:#495057}
         .btn-danger-sm{background:#ff6b6b;color:#fff;padding:0.5rem;border:none;border-radius:6px;cursor:pointer}
-        .btn-icon{width:40px;height:40px;border-radius:8px;border:none;background:#f8f9fa;color:#6c757d;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-        .btn-icon:hover{background:#e9ecef;color:#667eea}
+        .btn-icon{width:36px;height:36px;border-radius:8px;border:none;background:#f8f9fa;color:#6c757d;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.875rem}
         
-        .main-content{padding:1.5rem;overflow-x:auto}
-        .boards-container{display:flex;gap:1.25rem;min-width:fit-content;padding-bottom:1rem}
-        .board{background:#fff;border-radius:16px;width:340px;min-width:340px;max-height:calc(100vh - 220px);display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
-        .board-header{padding:1.25rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center}
-        .board-header h3{font-size:1rem;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.2)}
-        .board-actions{display:flex;gap:0.5rem}
-        .board-actions button{width:32px;height:32px;border-radius:8px;border:none;background:rgba(255,255,255,0.25);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.875rem;transition:all 0.2s}
-        .board-actions button:hover{background:rgba(255,255,255,0.4)}
-        .board-todos{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem}
+        /* Main Content - Horizontal Scroll */
+        .main-content{padding:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
         
-        .todo-item{background:#f8f9fa;border-radius:12px;padding:1rem;border:2px solid transparent;transition:all 0.2s}
-        .todo-item:hover{border-color:#e9ecef;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
-        .todo-header{display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem;margin-bottom:0.5rem}
-        .todo-text{font-size:0.9375rem;color:#212529;line-height:1.5;flex:1;word-break:break-word}
-        .todo-actions{display:flex;gap:0.25rem;opacity:0;transition:opacity 0.2s}
-        .todo-item:hover .todo-actions{opacity:1}
+        /* Boards Container - Flexible */
+        .boards-container{display:flex;gap:1rem;min-width:fit-content;padding-bottom:1rem}
+        
+        /* Board - Flexible Width */
+        .board{background:#fff;border-radius:16px;min-width:300px;width:100%;max-width:100%;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.08);flex:1}
+        @media(min-width:768px){
+            .board{min-width:350px;width:350px}
+            .header h1{font-size:1.5rem}
+            .user-info{display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#6c757d}
+            .btn-app{padding:0.625rem 1.25rem;font-size:0.875rem}
+        }
+        
+        .board-header{padding:1rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center}
+        .board-header h3{font-size:0.9375rem;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.2);margin:0}
+        .board-actions{display:flex;gap:0.25rem}
+        .board-actions button{width:28px;height:28px;border-radius:6px;border:none;background:rgba(255,255,255,0.25);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem}
+        
+        .board-todos{flex:1;overflow-y:auto;padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;max-height:60vh}
+        
+        /* Todo Item - Mit Checkbox und Actions */
+        .todo-item{background:#f8f9fa;border-radius:12px;padding:0.75rem;border:2px solid transparent;transition:all 0.2s;position:relative}
+        .todo-item:hover{border-color:#e9ecef}
+        .todo-item.selected{background:#e3f2fd;border-color:#667eea}
+        
+        .todo-header{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.25rem}
+        .todo-checkbox{margin-top:0.25rem;cursor:pointer;width:18px;height:18px;accent-color:#667eea}
+        .todo-content{flex:1;min-width:0}
+        .todo-text{font-size:0.875rem;color:#212529;line-height:1.4;word-break:break-word;white-space:pre-wrap}
+        .todo-text ul, .todo-text ol{margin-left:1.2rem;margin-top:0.25rem;margin-bottom:0.25rem}
+        .todo-text ul{list-style-type:disc}
+        .todo-text ol{list-style-type:decimal}
+        
+        .todo-actions{display:flex;gap:0.25rem;opacity:1}
+        @media(min-width:768px){.todo-actions{opacity:0}.todo-item:hover .todo-actions{opacity:1}}
+        
         .todo-btn{width:28px;height:28px;border:none;background:transparent;color:#6c757d;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8125rem}
         .todo-btn:hover{background:#e9ecef}
         .todo-btn.pdf{color:#ff6b6b}
         .todo-btn.pdf:hover{background:#ff6b6b;color:#fff}
-        .todo-attachments{display:flex;gap:0.5rem;margin-top:0.75rem;flex-wrap:wrap}
-        .attachment{display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;background:#fff;border-radius:6px;font-size:0.8125rem;cursor:pointer;border:1px solid #e9ecef}
+        .todo-btn.delete{color:#ff6b6b}
+        .todo-btn.delete:hover{background:#ff6b6b;color:#fff}
+        
+        .todo-attachments{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap}
+        .attachment{display:inline-flex;align-items:center;gap:0.25rem;padding:0.25rem 0.5rem;background:#fff;border-radius:4px;font-size:0.75rem;cursor:pointer;border:1px solid #e9ecef}
         .attachment.pdf{color:#ff6b6b;border-color:#ff6b6b30}
         
-        .add-todo{padding:0.875rem;border:2px dashed #dee2e6;border-radius:10px;background:transparent;color:#6c757d;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-size:0.9375rem;font-weight:500;transition:all 0.2s}
-        .add-todo:hover{border-color:#667eea;color:#667eea;background:#667eea08}
+        .add-todo{padding:0.75rem;border:2px dashed #dee2e6;border-radius:10px;background:transparent;color:#6c757d;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.5rem;font-size:0.875rem;font-weight:500;margin-top:0.5rem}
         
-        .section{margin-top:2rem;padding-top:1.5rem;border-top:2px solid #e9ecef}
+        /* Batch Actions Bar */
+        .batch-actions{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#212529;color:#fff;padding:0.75rem 1.5rem;border-radius:50px;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:none;align-items:center;gap:1rem;z-index:50}
+        .batch-actions.active{display:flex}
+        .batch-actions button{background:#667eea;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;font-size:0.875rem}
+        
+        /* Sections */
+        .section{margin-top:1.5rem;padding-top:1rem;border-top:2px solid #e9ecef}
         .section.hidden{display:none}
-        .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-        .section-header h2{font-size:1.125rem;font-weight:700;color:#6c757d;display:flex;align-items:center;gap:0.5rem}
+        .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;padding:0 0.5rem}
+        .section-header h2{font-size:1rem;font-weight:700;color:#6c757d;display:flex;align-items:center;gap:0.5rem;margin:0}
         
-        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)}
+        /* Modals - Größer */
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:1rem}
         .modal.active{display:flex}
-        .modal-content{background:#fff;border-radius:16px;padding:1.5rem;width:100%;max-width:400px;animation:modalSlide 0.3s ease}
+        .modal-content{background:#fff;border-radius:16px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;animation:modalSlide 0.3s ease;display:flex;flex-direction:column}
+        @media(min-width:768px){.modal-content{max-width:700px}}
         @keyframes modalSlide{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
-        .modal-content h3{margin-bottom:1.25rem;font-size:1.25rem;font-weight:700}
-        .modal-content input,.modal-content textarea,.modal-content select{width:100%;padding:0.875rem;border:2px solid #e9ecef;border-radius:10px;font-size:0.9375rem;margin-bottom:1rem;font-family:inherit}
-        .modal-content input:focus,.modal-content textarea:focus{outline:none;border-color:#667eea}
-        .modal-content textarea{min-height:100px;resize:vertical}
-        .color-picker{margin-bottom:1rem}
-        .color-picker label{display:block;font-size:0.875rem;font-weight:600;margin-bottom:0.75rem;color:#495057}
-        .colors{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem}
-        .color-btn{width:40px;height:40px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:all 0.2s;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
-        .color-btn.active{border-color:#212759;transform:scale(1.15)}
-        #customColor{width:100%;height:48px;padding:0.25rem;border-radius:8px;border:2px solid #e9ecef;cursor:pointer}
-        .modal-actions{display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.5rem}
         
-        .file-upload{margin-bottom:1rem}
-        .file-upload label{display:flex;align-items:center;gap:0.75rem;padding:1rem;border:2px dashed #dee2e6;border-radius:10px;cursor:pointer;color:#6c757d;font-size:0.9375rem;transition:all 0.2s}
-        .file-upload label:hover{border-color:#667eea;color:#667eea}
+        .modal-header{padding:1.25rem;border-bottom:1px solid #e9ecef;display:flex;justify-content:space-between;align-items:center}
+        .modal-header h3{margin:0;font-size:1.25rem;font-weight:700}
+        .modal-body{padding:1.25rem;flex:1;overflow-y:auto}
+        .modal-footer{padding:1.25rem;border-top:1px solid #e9ecef;display:flex;gap:0.75rem;justify-content:flex-end;flex-wrap:wrap}
+        
+        /* Rich Text Editor */
+        .rich-editor{border:2px solid #e9ecef;border-radius:10px;overflow:hidden}
+        .editor-toolbar{display:flex;gap:0.5rem;padding:0.5rem;background:#f8f9fa;border-bottom:1px solid #e9ecef;flex-wrap:wrap}
+        .editor-toolbar button{padding:0.375rem 0.75rem;background:#fff;border:1px solid #dee2e6;border-radius:4px;cursor:pointer;font-size:0.8125rem;color:#495057}
+        .editor-toolbar button:hover{background:#e9ecef}
+        .editor-content{width:100%;min-height:200px;padding:1rem;font-size:0.9375rem;line-height:1.6;resize:vertical;border:none;outline:none;font-family:inherit}
+        @media(min-width:768px){.editor-content{min-height:300px}}
+        
+        .file-upload{margin-top:1rem}
+        .file-upload label{display:flex;align-items:center;gap:0.75rem;padding:0.75rem;border:2px dashed #dee2e6;border-radius:8px;cursor:pointer;color:#6c757d;font-size:0.875rem}
         .file-upload input{display:none}
-        .file-preview{margin-top:0.75rem;display:flex;flex-direction:column;gap:0.5rem}
-        .file-preview-item{display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:#f8f9fa;border-radius:8px;font-size:0.875rem}
-        .file-preview-item button{background:none;border:none;color:#ff6b6b;cursor:pointer;padding:0.25rem}
+        .file-preview{margin-top:0.5rem;display:flex;flex-direction:column;gap:0.5rem}
+        .file-preview-item{display:flex;align-items:center;justify-content:space-between;padding:0.5rem;background:#f8f9fa;border-radius:6px;font-size:0.8125rem}
         
+        /* Trash Section */
+        .trash-section{background:#fff3cd;border-color:#ffeaa7}
+        .trash-section .section-header h2{color:#856404}
+        .trash-item{opacity:0.7;background:#fff}
+        .restore-btn{color:#28a745;margin-left:auto}
+        
+        /* Color Picker */
+        .color-picker{margin-bottom:1rem}
+        .color-picker label{display:block;font-size:0.875rem;font-weight:600;margin-bottom:0.75rem}
+        .colors{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem}
+        .color-btn{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer}
+        .color-btn.active{border-color:#212759;transform:scale(1.1)}
+        #customColor{width:100%;height:40px;padding:0.25rem;border-radius:6px;border:1px solid #dee2e6}
+        
+        /* PDF Viewer */
         .pdf-viewer{display:none;position:fixed;inset:0;background:#fff;z-index:2000;flex-direction:column}
         .pdf-viewer.active{display:flex}
-        .pdf-viewer-header{padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e9ecef;background:#fff}
-        .pdf-viewer-header span{font-weight:700;font-size:1.125rem}
+        .pdf-viewer-header{padding:1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e9ecef}
         .pdf-viewer iframe{flex:1;border:none;width:100%;height:100%}
         
-        #pdfExportContainer{position:fixed;left:-9999px;top:0;width:800px;background:#fff;padding:60px;font-family:'Inter',sans-serif}
-        .pdf-header{text-align:center;margin-bottom:3rem;padding-bottom:1.5rem;border-bottom:3px solid #667eea}
-        .pdf-header h1{color:#667eea;font-size:2rem;margin-bottom:0.5rem;font-weight:800}
-        .pdf-header p{color:#6c757d;font-size:0.9375rem}
-        .pdf-content{font-size:1.25rem;line-height:1.8;color:#212529;margin-bottom:3rem;white-space:pre-wrap}
-        .pdf-meta{display:flex;justify-content:space-between;color:#6c757d;font-size:0.875rem;padding-top:1.5rem;border-top:1px solid #e9ecef;margin-top:2rem}
+        /* Export Container Fix */
+        #pdfExportContainer{position:absolute;left:-9999px;top:0;width:210mm;background:#fff;padding:20mm;font-family:'Inter',sans-serif;box-sizing:border-box}
+        .pdf-export-page{page-break-after:always;padding:20mm}
+        .pdf-header{text-align:center;margin-bottom:2rem;border-bottom:2px solid #667eea;padding-bottom:1rem}
+        .pdf-header h1{color:#667eea;font-size:1.75rem;margin:0}
+        .pdf-header p{color:#6c757d;font-size:0.875rem;margin:0.5rem 0 0}
+        .pdf-todo{margin-bottom:1.5rem;padding:1rem;background:#f8f9fa;border-radius:8px}
+        .pdf-todo-text{font-size:1rem;line-height:1.6;white-space:pre-wrap}
+        .pdf-meta{display:flex;justify-content:space-between;color:#6c757d;font-size:0.75rem;margin-top:2rem;border-top:1px solid #dee2e6;padding-top:1rem}
         
-        ::-webkit-scrollbar{width:8px;height:8px}
-        ::-webkit-scrollbar-track{background:#f1f3f5;border-radius:4px}
-        ::-webkit-scrollbar-thumb{background:#ced4da;border-radius:4px}
-        
-        @media(max-width:640px){
-            .board{width:300px;min-width:300px}
-            .header h1{font-size:1.25rem}
-            .todo-actions{opacity:1}
-        }
+        ::-webkit-scrollbar{width:6px;height:6px}
+        ::-webkit-scrollbar-track{background:#f1f3f5}
+        ::-webkit-scrollbar-thumb{background:#ced4da;border-radius:3px}
     </style>
 </head>
 <body>
@@ -174,12 +217,10 @@
         <div class="auth-box">
             <h2><i class="fas fa-shield-alt"></i> BoardFlow</h2>
             <p>Sicher verwaltet mit Firebase</p>
-            
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchTab('login')">Anmelden</button>
                 <button class="auth-tab" onclick="switchTab('register')">Registrieren</button>
             </div>
-            
             <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
                 <div class="input-group">
                     <label>E-Mail</label>
@@ -192,7 +233,6 @@
                 <button type="submit" class="btn btn-primary" id="loginBtn">Anmelden</button>
                 <div class="loading" id="loginLoading"><i class="fas fa-circle-notch fa-spin"></i> Bitte warten...</div>
             </form>
-            
             <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
                 <div class="input-group">
                     <label>E-Mail</label>
@@ -218,6 +258,7 @@
                 <h1><i class="fas fa-columns"></i> BoardFlow</h1>
                 <button class="btn-icon" onclick="toggleSection('ideas')" title="Ideen"><i class="fas fa-lightbulb"></i></button>
                 <button class="btn-icon" onclick="toggleSection('notes')" title="Rückmeldungen"><i class="fas fa-comments"></i></button>
+                <button class="btn-icon" onclick="toggleSection('trash')" title="Papierkorb"><i class="fas fa-trash-alt"></i></button>
             </div>
             <div class="header-right">
                 <div class="user-info">
@@ -247,33 +288,53 @@
                 </div>
                 <div class="boards-container" id="notesContainer"></div>
             </div>
+            
+            <div class="section trash-section" id="trashSection">
+                <div class="section-header">
+                    <h2><i class="fas fa-trash-alt" style="color:#856404"></i> Papierkorb (3 Tage)</h2>
+                    <button class="btn-icon" onclick="toggleSection('trash')"><i class="fas fa-chevron-up"></i></button>
+                </div>
+                <div class="boards-container" id="trashContainer"></div>
+            </div>
         </main>
+
+        <div class="batch-actions" id="batchActions">
+            <span id="batchCount">0 ausgewählt</span>
+            <button onclick="exportSelectedPDFs()"><i class="fas fa-file-pdf"></i> PDF Export</button>
+            <button onclick="deleteSelected()" style="background:#ff6b6b"><i class="fas fa-trash"></i> Löschen</button>
+            <button onclick="clearSelection()" style="background:#6c757d">Abbrechen</button>
+        </div>
     </div>
 
     <div class="modal" id="boardModal">
-        <div class="modal-content">
-            <h3 id="boardModalTitle">Neues Board</h3>
-            <input type="text" id="boardName" placeholder="Board Name" maxlength="30">
-            <div class="color-picker">
-                <label>Farbe wählen</label>
-                <div class="colors">
-                    <button type="button" class="color-btn active" data-color="#ff6b6b" style="background:#ff6b6b" onclick="selectColor(this,'#ff6b6b')"></button>
-                    <button type="button" class="color-btn" data-color="#4ecdc4" style="background:#4ecdc4" onclick="selectColor(this,'#4ecdc4')"></button>
-                    <button type="button" class="color-btn" data-color="#45b7d1" style="background:#45b7d1" onclick="selectColor(this,'#45b7d1')"></button>
-                    <button type="button" class="color-btn" data-color="#96ceb4" style="background:#96ceb4" onclick="selectColor(this,'#96ceb4')"></button>
-                    <button type="button" class="color-btn" data-color="#ffeaa7" style="background:#ffeaa7" onclick="selectColor(this,'#ffeaa7')"></button>
-                    <button type="button" class="color-btn" data-color="#dfe6e9" style="background:#dfe6e9" onclick="selectColor(this,'#dfe6e9')"></button>
-                    <button type="button" class="color-btn" data-color="#fd79a8" style="background:#fd79a8" onclick="selectColor(this,'#fd79a8')"></button>
-                    <button type="button" class="color-btn" data-color="#a29bfe" style="background:#a29bfe" onclick="selectColor(this,'#a29bfe')"></button>
-                </div>
-                <input type="color" id="customColor" value="#ff6b6b" onchange="selectCustomColor(this.value)">
+        <div class="modal-content" style="max-width:400px">
+            <div class="modal-header">
+                <h3 id="boardModalTitle">Neues Board</h3>
+                <button class="btn-icon" onclick="closeModal('boardModal')" style="background:transparent"><i class="fas fa-times"></i></button>
             </div>
-            <select id="boardSection">
-                <option value="main">Hauptbereich</option>
-                <option value="ideas">Ideen</option>
-                <option value="notes">Rückmeldungen</option>
-            </select>
-            <div class="modal-actions">
+            <div class="modal-body">
+                <input type="text" id="boardName" placeholder="Board Name" maxlength="30" style="margin-bottom:1rem">
+                <div class="color-picker">
+                    <label>Farbe wählen</label>
+                    <div class="colors">
+                        <button type="button" class="color-btn active" data-color="#ff6b6b" style="background:#ff6b6b" onclick="selectColor(this,'#ff6b6b')"></button>
+                        <button type="button" class="color-btn" data-color="#4ecdc4" style="background:#4ecdc4" onclick="selectColor(this,'#4ecdc4')"></button>
+                        <button type="button" class="color-btn" data-color="#45b7d1" style="background:#45b7d1" onclick="selectColor(this,'#45b7d1')"></button>
+                        <button type="button" class="color-btn" data-color="#96ceb4" style="background:#96ceb4" onclick="selectColor(this,'#96ceb4')"></button>
+                        <button type="button" class="color-btn" data-color="#ffeaa7" style="background:#ffeaa7" onclick="selectColor(this,'#ffeaa7')"></button>
+                        <button type="button" class="color-btn" data-color="#dfe6e9" style="background:#dfe6e9" onclick="selectColor(this,'#dfe6e9')"></button>
+                        <button type="button" class="color-btn" data-color="#fd79a8" style="background:#fd79a8" onclick="selectColor(this,'#fd79a8')"></button>
+                        <button type="button" class="color-btn" data-color="#a29bfe" style="background:#a29bfe" onclick="selectColor(this,'#a29bfe')"></button>
+                    </div>
+                    <input type="color" id="customColor" value="#ff6b6b" onchange="selectCustomColor(this.value)">
+                </div>
+                <select id="boardSection" style="width:100%;padding:0.75rem;border:2px solid #e9ecef;border-radius:8px">
+                    <option value="main">Hauptbereich</option>
+                    <option value="ideas">Ideen</option>
+                    <option value="notes">Rückmeldungen</option>
+                </select>
+            </div>
+            <div class="modal-footer">
                 <button class="btn-app btn-secondary" onclick="closeModal('boardModal')">Abbrechen</button>
                 <button class="btn-app btn-success" onclick="saveBoard()">Speichern</button>
             </div>
@@ -282,16 +343,31 @@
 
     <div class="modal" id="todoModal">
         <div class="modal-content">
-            <h3>Todo bearbeiten</h3>
-            <textarea id="todoText" placeholder="Dein Todo..."></textarea>
-            <div class="file-upload">
-                <label for="todoFile"><i class="fas fa-paperclip"></i> Anhang hinzufügen (PDF/Bild)</label>
-                <input type="file" id="todoFile" accept=".pdf,.jpg,.jpeg,.png,.gif" onchange="handleFile(this)">
-                <div class="file-preview" id="filePreview"></div>
+            <div class="modal-header">
+                <h3>Todo bearbeiten</h3>
+                <button class="btn-icon" onclick="closeModal('todoModal')" style="background:transparent"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-actions">
-                <button class="btn-danger-sm" onclick="deleteTodo()" id="deleteTodoBtn" style="display:none;margin-right:auto"><i class="fas fa-trash"></i></button>
-                <button class="btn-app btn-secondary" onclick="exportTodoPDF()" style="background:#ff6b6b;color:#fff"><i class="fas fa-file-pdf"></i> PDF</button>
+            <div class="modal-body">
+                <div class="rich-editor">
+                    <div class="editor-toolbar">
+                        <button onclick="formatText('insertUnorderedList')" title="Aufzählung"><i class="fas fa-list-ul"></i></button>
+                        <button onclick="formatText('insertOrderedList')" title="Nummerierung"><i class="fas fa-list-ol"></i></button>
+                        <button onclick="formatText('bold')" title="Fett"><i class="fas fa-bold"></i></button>
+                        <button onclick="formatText('italic')" title="Kursiv"><i class="fas fa-italic"></i></button>
+                        <button onclick="formatText('removeFormat')" title="Formatierung entfernen"><i class="fas fa-remove-format"></i></button>
+                    </div>
+                    <div id="editor" class="editor-content" contenteditable="true" placeholder="Dein Todo..."></div>
+                </div>
+                
+                <div class="file-upload">
+                    <label for="todoFile"><i class="fas fa-paperclip"></i> Anhang hinzufügen (PDF/Bild)</label>
+                    <input type="file" id="todoFile" accept=".pdf,.jpg,.jpeg,.png,.gif" onchange="handleFile(this)">
+                    <div class="file-preview" id="filePreview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-danger-sm" onclick="deleteTodo()" id="deleteTodoBtn" style="display:none;margin-right:auto"><i class="fas fa-trash"></i> Löschen</button>
+                <button class="btn-app btn-secondary" onclick="exportCurrentTodoPDF()" style="background:#ff6b6b;color:#fff"><i class="fas fa-file-pdf"></i> PDF</button>
                 <button class="btn-app btn-secondary" onclick="closeModal('todoModal')">Abbrechen</button>
                 <button class="btn-app btn-success" onclick="saveTodo()">Speichern</button>
             </div>
@@ -306,17 +382,7 @@
         <iframe id="pdfFrame"></iframe>
     </div>
 
-    <div id="pdfExportContainer">
-        <div class="pdf-header">
-            <h1>BoardFlow Export</h1>
-            <p id="pdfExportDate"></p>
-        </div>
-        <div class="pdf-content" id="pdfExportContent"></div>
-        <div class="pdf-meta">
-            <span id="pdfExportUser"></span>
-            <span id="pdfExportBoard"></span>
-        </div>
-    </div>
+    <div id="pdfExportContainer"></div>
 
     <script type="module">
         await new Promise(resolve => {
@@ -324,7 +390,7 @@
             else setTimeout(resolve, 500);
         });
         
-        const { auth, db, serverTimestamp, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } = window.firebaseApp;
+        const { auth, db, serverTimestamp, collection, doc, addDoc, updateDoc, deleteDoc, query, where, onSnapshot, getDoc, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } = window.firebaseApp;
         
         let currentUser = null;
         let boards = [];
@@ -333,6 +399,7 @@
         let currentBoardId = null;
         let selectedColor = '#ff6b6b';
         let tempAttachments = [];
+        let selectedTodos = new Set();
         let unsubscribe = null;
 
         onAuthStateChanged(auth, (user) => {
@@ -353,7 +420,6 @@
         window.switchTab = (tab) => {
             document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            
             if (tab === 'login') {
                 document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
                 document.getElementById('loginForm').classList.add('active');
@@ -369,10 +435,8 @@
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             const loading = document.getElementById('loginLoading');
-            
             btn.disabled = true;
             loading.classList.add('active');
-            
             try {
                 await signInWithEmailAndPassword(auth, email, password);
             } catch (error) {
@@ -387,18 +451,14 @@
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
             const confirm = document.getElementById('regPasswordConfirm').value;
-            
             if (password !== confirm) {
                 alert('Passwörter stimmen nicht überein');
                 return;
             }
-            
             const btn = document.getElementById('regBtn');
             const loading = document.getElementById('regLoading');
-            
             btn.disabled = true;
             loading.classList.add('active');
-            
             try {
                 await createUserWithEmailAndPassword(auth, email, password);
                 await createDefaultBoards();
@@ -413,11 +473,10 @@
 
         async function createDefaultBoards() {
             const defaultBoards = [
-                { name: 'To Do', color: '#ff6b6b', section: 'main', todos: [] },
-                { name: 'In Progress', color: '#4ecdc4', section: 'main', todos: [] },
-                { name: 'Done', color: '#96ceb4', section: 'main', todos: [] }
+                { name: 'To Do', color: '#ff6b6b', section: 'main', todos: [], deletedTodos: [] },
+                { name: 'In Progress', color: '#4ecdc4', section: 'main', todos: [], deletedTodos: [] },
+                { name: 'Done', color: '#96ceb4', section: 'main', todos: [], deletedTodos: [] }
             ];
-            
             for (const board of defaultBoards) {
                 await addDoc(collection(db, 'boards'), {
                     ...board,
@@ -429,7 +488,6 @@
 
         function loadBoards() {
             if (unsubscribe) unsubscribe();
-            
             const q = query(collection(db, 'boards'), where('userId', '==', currentUser.uid));
             unsubscribe = onSnapshot(q, (snapshot) => {
                 boards = [];
@@ -444,14 +502,61 @@
             const main = document.getElementById('boardsContainer');
             const ideas = document.getElementById('ideasContainer');
             const notes = document.getElementById('notesContainer');
+            const trash = document.getElementById('trashContainer');
             
             main.innerHTML = '';
             ideas.innerHTML = '';
             notes.innerHTML = '';
+            trash.innerHTML = '';
             
             boards.filter(b => b.section === 'main').forEach(b => main.appendChild(createBoardEl(b)));
             boards.filter(b => b.section === 'ideas').forEach(b => ideas.appendChild(createBoardEl(b)));
             boards.filter(b => b.section === 'notes').forEach(b => notes.appendChild(createBoardEl(b)));
+            
+            // Render Trash (from all boards)
+            const allDeletedTodos = [];
+            boards.forEach(board => {
+                if (board.deletedTodos) {
+                    board.deletedTodos.forEach((todo, idx) => {
+                        // Check if younger than 3 days
+                        const deletedDate = new Date(todo.deletedAt);
+                        const now = new Date();
+                        const diffTime = Math.abs(now - deletedDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays <= 3) {
+                            allDeletedTodos.push({...todo, boardId: board.id, boardName: board.name, index: idx});
+                        }
+                    });
+                }
+            });
+            
+            if (allDeletedTodos.length > 0) {
+                const trashBoard = document.createElement('div');
+                trashBoard.className = 'board';
+                trashBoard.style.opacity = '0.8';
+                trashBoard.innerHTML = `
+                    <div class="board-header" style="background:#856404">
+                        <h3>Gelöschte Todos</h3>
+                    </div>
+                    <div class="board-todos">
+                        ${allDeletedTodos.map(t => `
+                            <div class="todo-item trash-item">
+                                <div class="todo-header">
+                                    <div class="todo-text">${escape(t.text)}</div>
+                                    <button class="todo-btn restore-btn" onclick="restoreTodo('${t.boardId}', ${t.index})" title="Wiederherstellen">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                </div>
+                                <div style="font-size:0.75rem;color:#856404;margin-top:0.5rem">
+                                    Aus: ${escape(t.boardName)} • Gelöscht: ${new Date(t.deletedAt).toLocaleDateString('de-DE')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                trash.appendChild(trashBoard);
+            }
         }
 
         function createBoardEl(board) {
@@ -459,27 +564,39 @@
             div.className = 'board';
             
             const todos = board.todos || [];
-            const todosHtml = todos.map((t, idx) => `
-                <div class="todo-item">
+            const todosHtml = todos.map((t, idx) => {
+                const isSelected = selectedTodos.has(`${board.id}-${idx}`);
+                return `
+                <div class="todo-item ${isSelected ? 'selected' : ''}" data-board="${board.id}" data-index="${idx}">
                     <div class="todo-header">
-                        <div class="todo-text">${escape(t.text)}</div>
+                        <input type="checkbox" class="todo-checkbox" ${isSelected ? 'checked' : ''} 
+                               onchange="toggleTodoSelection('${board.id}', ${idx}, this.checked)"
+                               onclick="event.stopPropagation()">
+                        <div class="todo-content" onclick="editTodo('${board.id}', ${idx})">
+                            <div class="todo-text">${formatTextForDisplay(t.text)}</div>
+                            ${t.attachments?.length ? `
+                                <div class="todo-attachments">
+                                    ${t.attachments.map(a => `
+                                        <span class="attachment ${a.name.endsWith('.pdf') ? 'pdf' : ''}" 
+                                              onclick="event.stopPropagation();openAttachment('${a.url}', '${escape(a.name)}')">
+                                            <i class="fas ${a.name.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-image'}"></i>
+                                            ${escape(a.name.substring(0, 15))}${a.name.length > 15 ? '...' : ''}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
                         <div class="todo-actions">
-                            <button class="todo-btn pdf" onclick="event.stopPropagation();quickExportPDF('${board.id}', ${idx})" title="PDF Export"><i class="fas fa-file-pdf"></i></button>
-                            <button class="todo-btn" onclick="event.stopPropagation();editTodo('${board.id}', ${idx})" title="Bearbeiten"><i class="fas fa-pen"></i></button>
+                            <button class="todo-btn pdf" onclick="event.stopPropagation();exportSinglePDF('${board.id}', ${idx})" title="PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                            <button class="todo-btn delete" onclick="event.stopPropagation();quickDeleteTodo('${board.id}', ${idx})" title="Löschen">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </div>
-                    ${t.attachments?.length ? `
-                        <div class="todo-attachments">
-                            ${t.attachments.map(a => `
-                                <span class="attachment ${a.name.endsWith('.pdf') ? 'pdf' : ''}" onclick="event.stopPropagation();openAttachment('${a.url}', '${escape(a.name)}')">
-                                    <i class="fas ${a.name.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-image'}"></i>
-                                    ${escape(a.name.substring(0, 15))}${a.name.length > 15 ? '...' : ''}
-                                </span>
-                            `).join('')}
-                        </div>
-                    ` : ''}
                 </div>
-            `).join('');
+            `}).join('');
             
             div.innerHTML = `
                 <div class="board-header" style="background:${board.color}">
@@ -503,6 +620,104 @@
             return div.innerHTML;
         }
 
+        function formatTextForDisplay(text) {
+            if (!text) return '';
+            // Convert markdown-like lists to HTML
+            let formatted = text
+                .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
+                .replace(/^\d+\. (.*$)/gim, '<ol><li>$1</li></ol>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+            return formatted;
+        }
+
+        // Selection Logic
+        window.toggleTodoSelection = (boardId, index, checked) => {
+            const key = `${boardId}-${index}`;
+            if (checked) {
+                selectedTodos.add(key);
+            } else {
+                selectedTodos.delete(key);
+            }
+            updateBatchActions();
+            render();
+        };
+
+        function updateBatchActions() {
+            const bar = document.getElementById('batchActions');
+            const count = document.getElementById('batchCount');
+            if (selectedTodos.size > 0) {
+                bar.classList.add('active');
+                count.textContent = `${selectedTodos.size} ausgewählt`;
+            } else {
+                bar.classList.remove('active');
+            }
+        }
+
+        window.clearSelection = () => {
+            selectedTodos.clear();
+            updateBatchActions();
+            render();
+        };
+
+        window.deleteSelected = async () => {
+            if (!confirm(`${selectedTodos.size} Todos wirklich löschen?`)) return;
+            
+            const toDelete = Array.from(selectedTodos);
+            for (const key of toDelete) {
+                const [boardId, index] = key.split('-');
+                await moveToTrash(boardId, parseInt(index));
+            }
+            selectedTodos.clear();
+            updateBatchActions();
+        };
+
+        async function moveToTrash(boardId, index) {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+            
+            const todos = [...(board.todos || [])];
+            const deletedTodo = todos[index];
+            todos.splice(index, 1);
+            
+            const deletedTodos = [...(board.deletedTodos || [])];
+            deletedTodos.push({
+                ...deletedTodo,
+                deletedAt: new Date().toISOString()
+            });
+            
+            await updateDoc(doc(db, 'boards', boardId), { 
+                todos, 
+                deletedTodos 
+            });
+        }
+
+        window.quickDeleteTodo = async (boardId, index) => {
+            if (!confirm('Todo wirklich löschen?')) return;
+            await moveToTrash(boardId, index);
+        };
+
+        window.restoreTodo = async (boardId, index) => {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+            
+            const deletedTodos = [...(board.deletedTodos || [])];
+            const restoredTodo = deletedTodos[index];
+            deletedTodos.splice(index, 1);
+            
+            const todos = [...(board.todos || [])];
+            todos.push({
+                ...restoredTodo,
+                restoredAt: new Date().toISOString()
+            });
+            
+            await updateDoc(doc(db, 'boards', boardId), { 
+                todos, 
+                deletedTodos 
+            });
+        };
+
+        // Board Actions
         window.openBoardModal = () => {
             editingBoardId = null;
             document.getElementById('boardModalTitle').textContent = 'Neues Board';
@@ -519,11 +734,9 @@
             document.getElementById('boardModalTitle').textContent = 'Board bearbeiten';
             document.getElementById('boardName').value = board.name;
             document.getElementById('boardSection').value = board.section || 'main';
-            
             const btn = document.querySelector(`.color-btn[data-color="${board.color}"]`);
             if (btn) selectColor(btn, board.color);
             else selectCustomColor(board.color);
-            
             document.getElementById('boardModal').classList.add('active');
         };
 
@@ -546,6 +759,7 @@
                     await addDoc(collection(db, 'boards'), {
                         ...data,
                         todos: [],
+                        deletedTodos: [],
                         createdAt: serverTimestamp()
                     });
                 }
@@ -564,40 +778,49 @@
             }
         };
 
+        // Todo Actions
         window.addTodo = (boardId) => {
             currentBoardId = boardId;
             editingTodoId = null;
             tempAttachments = [];
-            document.getElementById('todoText').value = '';
+            document.getElementById('editor').innerHTML = '';
             document.getElementById('filePreview').innerHTML = '';
             document.getElementById('deleteTodoBtn').style.display = 'none';
             document.getElementById('todoModal').classList.add('active');
         };
 
-        window.editTodo = (boardId, todoIndex) => {
+        window.editTodo = (boardId, index) => {
+            if (selectedTodos.size > 0) return; // Don't open if in selection mode
+            
             const board = boards.find(b => b.id === boardId);
-            const todo = board.todos[todoIndex];
+            const todo = board.todos[index];
             
             currentBoardId = boardId;
-            editingTodoId = todoIndex;
+            editingTodoId = index;
             tempAttachments = [...(todo.attachments || [])];
             
-            document.getElementById('todoText').value = todo.text;
+            document.getElementById('editor').innerHTML = todo.text || '';
             updateFilePreview();
-            document.getElementById('deleteTodoBtn').style.display = 'block';
+            document.getElementById('deleteTodoBtn').style.display = 'inline-flex';
             document.getElementById('todoModal').classList.add('active');
         };
 
+        window.formatText = (command) => {
+            document.execCommand(command, false, null);
+            document.getElementById('editor').focus();
+        };
+
         window.saveTodo = async () => {
-            const text = document.getElementById('todoText').value.trim();
-            if (!text) return alert('Bitte gib einen Text ein');
+            const text = document.getElementById('editor').innerHTML;
+            const plainText = document.getElementById('editor').innerText.trim();
+            if (!plainText) return alert('Bitte gib einen Text ein');
             
             const board = boards.find(b => b.id === currentBoardId);
             const todos = [...(board.todos || [])];
             
             const todoData = {
                 id: editingTodoId !== null ? todos[editingTodoId].id : Date.now().toString(),
-                text,
+                text: text,
                 attachments: tempAttachments,
                 createdAt: editingTodoId !== null ? todos[editingTodoId].createdAt : new Date().toISOString()
             };
@@ -619,54 +842,89 @@
         window.deleteTodo = async () => {
             if (editingTodoId === null) return;
             if (!confirm('Todo wirklich löschen?')) return;
-            
-            const board = boards.find(b => b.id === currentBoardId);
-            const todos = board.todos.filter((_, idx) => idx !== editingTodoId);
-            
-            try {
-                await updateDoc(doc(db, 'boards', currentBoardId), { todos });
-                closeModal('todoModal');
-            } catch (error) {
-                alert('Fehler beim Löschen: ' + error.message);
-            }
+            await moveToTrash(currentBoardId, editingTodoId);
+            closeModal('todoModal');
         };
 
-        window.quickExportPDF = (boardId, todoIndex) => {
+        // PDF Export
+        window.exportSinglePDF = async (boardId, index) => {
             const board = boards.find(b => b.id === boardId);
-            const todo = board.todos[todoIndex];
-            exportTodoToPDF(todo, board.name);
+            const todo = board.todos[index];
+            await generatePDF([{...todo, boardName: board.name}]);
         };
 
-        window.exportTodoPDF = () => {
+        window.exportCurrentTodoPDF = async () => {
             if (!currentBoardId) return;
             const board = boards.find(b => b.id === currentBoardId);
             const todo = editingTodoId !== null ? board.todos[editingTodoId] : null;
             if (!todo) return;
-            exportTodoToPDF(todo, board.name);
+            await generatePDF([{...todo, boardName: board.name}]);
         };
 
-        function exportTodoToPDF(todo, boardName) {
-            document.getElementById('pdfExportDate').textContent = new Date().toLocaleString('de-DE');
-            document.getElementById('pdfExportContent').textContent = todo.text;
-            document.getElementById('pdfExportUser').textContent = currentUser.email;
-            document.getElementById('pdfExportBoard').textContent = boardName;
+        window.exportSelectedPDFs = async () => {
+            const selectedData = [];
+            for (const key of selectedTodos) {
+                const [boardId, index] = key.split('-');
+                const board = boards.find(b => b.id === boardId);
+                const todo = board.todos[index];
+                selectedData.push({...todo, boardName: board.name});
+            }
+            await generatePDF(selectedData);
+            selectedTodos.clear();
+            updateBatchActions();
+            render();
+        };
+
+        async function generatePDF(todos) {
+            const container = document.getElementById('pdfExportContainer');
+            const date = new Date().toLocaleString('de-DE');
             
-            const element = document.getElementById('pdfExportContainer');
+            let pagesHtml = '';
+            todos.forEach((todo, idx) => {
+                pagesHtml += `
+                    <div class="pdf-export-page" style="${idx > 0 ? 'page-break-before:always' : ''}">
+                        <div class="pdf-header">
+                            <h1>BoardFlow Todo</h1>
+                            <p>Export vom ${date}</p>
+                        </div>
+                        <div class="pdf-todo">
+                            <div class="pdf-todo-text">${todo.text}</div>
+                            ${todo.attachments?.length ? `
+                                <div style="margin-top:1rem;font-size:0.875rem;color:#6c757d">
+                                    Anhänge: ${todo.attachments.map(a => a.name).join(', ')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="pdf-meta">
+                            <span>Board: ${escape(todo.boardName)}</span>
+                            <span>Erstellt: ${new Date(todo.createdAt).toLocaleDateString('de-DE')}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = pagesHtml;
+            
             const opt = {
-                margin: [20, 20],
-                filename: `Todo-${todo.text.substring(0, 30).replace(/[^a-z0-9]/gi, '_')}.pdf`,
+                margin: 0,
+                filename: `BoardFlow-Export-${new Date().toISOString().split('T')[0]}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
             
-            html2pdf().set(opt).from(element).save();
+            try {
+                await html2pdf().set(opt).from(container).save();
+            } catch (error) {
+                console.error('PDF Error:', error);
+                alert('PDF konnte nicht erstellt werden');
+            }
         }
 
+        // File Handling
         window.handleFile = (input) => {
             const file = input.files[0];
             if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = (e) => {
                 tempAttachments.push({
@@ -704,6 +962,7 @@
             }
         };
 
+        // UI Helpers
         window.selectColor = (btn, color) => {
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
