@@ -58,7 +58,7 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529;-webkit-text-size-adjust:100%}
         
-        /* Print Styles */
+        /* Print Styles - Minimal */
         @media print {
             @page { margin: 15mm; size: auto; }
             body * { visibility: hidden; }
@@ -89,8 +89,13 @@
         
         .app{display:none}
         .app.active{display:block}
+        
+        /* Header mit zentriertem Button */
         .header{background:#fff;padding:0.75rem 1rem;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px rgba(0,0,0,0.08);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:0.5rem}
-        .header-left,.header-right{display:flex;align-items:center;gap:0.5rem}
+        .header-left{display:flex;align-items:center;gap:0.5rem;flex:1}
+        .header-center{flex:1;display:flex;justify-content:center}
+        .header-right{display:flex;align-items:center;gap:0.5rem;flex:1;justify-content:flex-end}
+        
         .header h1{font-size:1.1rem;font-weight:800;margin:0}
         .header h1 i{color:#667eea;margin-right:0.25rem}
         .user-info{display:none}
@@ -105,7 +110,6 @@
         .btn-icon.active{background:#667eea;color:#fff}
         .btn-icon.active:hover{background:#5568d3}
         
-        /* Spezifische Farben für aktive Zustände */
         .btn-icon.active-ideas{background:#ffc107;color:#212529}
         .btn-icon.active-ideas:hover{background:#e0a800}
         .btn-icon.active-notes{background:#6f42c1;color:#fff}
@@ -115,14 +119,17 @@
         .btn-icon.active-trash{background:#856404;color:#fff}
         .btn-icon.active-trash:hover{background:#6d5203}
         
+        @media(min-width:768px){
+            .header h1{font-size:1.5rem}
+            .user-info{display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#6c757d}
+            .btn-app{padding:0.625rem 1.25rem;font-size:0.875rem}
+        }
+        
         .main-content{padding:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
         .boards-container{display:flex;gap:1rem;min-width:fit-content;padding-bottom:1rem}
         .board{background:#fff;border-radius:16px;min-width:300px;width:100%;max-width:100%;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.08);flex:1}
         @media(min-width:768px){
             .board{min-width:400px;width:400px}
-            .header h1{font-size:1.5rem}
-            .user-info{display:flex;align-items:center;gap:0.75rem;font-size:0.875rem;color:#6c757d}
-            .btn-app{padding:0.625rem 1.25rem;font-size:0.875rem}
         }
         
         .board-header{padding:1rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center}
@@ -221,6 +228,8 @@
             .hide-mobile { display: none !important; }
             .pdf-viewer-header { padding: 0.75rem !important; }
             .pdf-viewer-header span { max-width: 150px !important; font-size: 0.875rem; }
+            .header-center { order: 3; width: 100%; margin-top: 0.5rem; }
+            .header-left, .header-right { flex: 0 0 auto; }
         }
         
         #printFrame { position: absolute; left: -9999px; top: 0; width: 210mm; background: white; }
@@ -231,7 +240,7 @@
     <div class="auth-container" id="authScreen">
         <div class="auth-box">
             <h2><i class="fas fa-shield-alt"></i> BoardFlow</h2>
-            <p>Sicher verwaltet mit Firebase<br><small>(Bleibt eingeloggt)</small></p>
+            <p>Organisiere deine Aufgaben effizient</p>
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="switchTab('login')">Anmelden</button>
                 <button class="auth-tab" onclick="switchTab('register')">Registrieren</button>
@@ -276,13 +285,15 @@
                 <button class="btn-icon" id="btn-completed" onclick="toggleSection('completed')" title="Erledigt"><i class="fas fa-check-circle"></i></button>
                 <button class="btn-icon" id="btn-trash" onclick="toggleSection('trash')" title="Papierkorb"><i class="fas fa-trash-alt"></i></button>
             </div>
+            <div class="header-center">
+                <button class="btn-app btn-success" onclick="openBoardModal()"><i class="fas fa-plus"></i> Board</button>
+            </div>
             <div class="header-right">
                 <div class="user-info">
                     <i class="fas fa-user-circle"></i>
                     <span id="userEmail"></span>
                 </div>
                 <button class="btn-app btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
-                <button class="btn-app btn-success" onclick="openBoardModal()"><i class="fas fa-plus"></i> Board</button>
             </div>
         </header>
 
@@ -451,7 +462,8 @@
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').classList.add('active');
                 loadBoards();
-                updateHeaderButtonStates(); // Initiale Button-Stati setzen
+                loadSectionStates(); // Gespeicherte Zustände laden
+                updateHeaderButtonStates();
             } else {
                 currentUser = null;
                 document.getElementById('authScreen').style.display = 'flex';
@@ -934,7 +946,7 @@
             closeModal('todoModal');
         };
 
-        // VEREINFACHTE PDF FUNKTIONEN - Nur ToDos in Kästen
+        // BEREINIGTE PDF FUNKTIONEN - Nur ToDos, kein Datum/Header/Footer
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
@@ -969,14 +981,15 @@
             let html = `
                 <html>
                 <head>
-                    <title>BoardFlow Export</title>
+                    <title>Export</title>
                     <style>
-                        @page { size: A4; margin: 20mm; }
+                        @page { margin: 20mm; size: auto; }
                         body { 
                             font-family: Arial, sans-serif; 
                             line-height: 1.6; 
                             color: #333;
-                            padding: 20px;
+                            margin: 0;
+                            padding: 0;
                         }
                         .todo-box { 
                             border: 2px solid #dee2e6; 
@@ -1001,7 +1014,7 @@
                             margin-bottom: 5px;
                         }
                         @media print {
-                            body { padding: 0; }
+                            body { margin: 0; }
                             .todo-box { break-inside: avoid; }
                         }
                     </style>
@@ -1010,7 +1023,6 @@
             `;
             
             todos.forEach((todo) => {
-                // HTML bereinigen aber Formatierung erhalten
                 let textContent = todo.text
                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
                 
@@ -1134,14 +1146,36 @@
         };
 
         window.closeModal = (id) => {
-            document.getElementById(id).classList.add('active');
+            document.getElementById(id).classList.remove('active');
             editingBoardId = null;
             editingTodoId = null;
             currentBoardId = null;
             tempAttachments = [];
         };
 
-        // KORRIGIERTE toggleSection Funktion mit Button-States
+        // SPEICHERUNG DER SECTION ZUSTÄNDE
+        function saveSectionStates() {
+            const states = {
+                ideas: !document.getElementById('ideasSection').classList.contains('hidden'),
+                notes: !document.getElementById('notesSection').classList.contains('hidden'),
+                completed: !document.getElementById('completedSection').classList.contains('hidden'),
+                trash: !document.getElementById('trashSection').classList.contains('hidden')
+            };
+            localStorage.setItem('boardflow_sections', JSON.stringify(states));
+        }
+
+        function loadSectionStates() {
+            const saved = localStorage.getItem('boardflow_sections');
+            if (saved) {
+                const states = JSON.parse(saved);
+                if (states.ideas === false) document.getElementById('ideasSection').classList.add('hidden');
+                if (states.notes === false) document.getElementById('notesSection').classList.add('hidden');
+                if (states.completed === false) document.getElementById('completedSection').classList.add('hidden');
+                if (states.trash === false) document.getElementById('trashSection').classList.add('hidden');
+            }
+        }
+
+        // KORRIGIERTE toggleSection Funktion mit Speicherung
         window.toggleSection = (section) => {
             const sectionEl = document.getElementById(section + 'Section');
             const btn = document.getElementById('btn-' + section);
@@ -1150,12 +1184,13 @@
             
             // Button State aktualisieren
             if (sectionEl.classList.contains('hidden')) {
-                // Sektion ist jetzt versteckt -> Button inaktiv (grau)
                 btn.classList.remove('active', 'active-ideas', 'active-notes', 'active-completed', 'active-trash');
             } else {
-                // Sektion ist jetzt sichtbar -> Button aktiv (farbig)
                 btn.classList.add('active', 'active-' + section);
             }
+            
+            // In localStorage speichern
+            saveSectionStates();
         };
 
         // Funktion zum Initialisieren der Button-States beim Laden
