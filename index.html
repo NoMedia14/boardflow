@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BoardFlow - PDF Fixed</title>
+    <title>BoardFlow - Mit Erledigt & PDF Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -32,8 +32,6 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529;-webkit-text-size-adjust:100%}
-        
-        /* ... (vorherige Styles bleiben gleich) ... */
         
         .auth-container{position:fixed;inset:0;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;z-index:3000;padding:1rem}
         .auth-box{background:#fff;padding:1.5rem;border-radius:20px;width:100%;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,0.3)}
@@ -89,14 +87,14 @@
         .todo-item{background:#f8f9fa;border-radius:12px;padding:0.75rem;border:2px solid transparent;transition:all 0.2s;position:relative}
         .todo-item:hover{border-color:#e9ecef}
         .todo-item.selected{background:#e3f2fd;border-color:#667eea}
+        .todo-item.completed{opacity:0.6;background:#d4edda}
         
         .todo-header{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.25rem}
         .todo-checkbox{margin-top:0.25rem;cursor:pointer;width:18px;height:18px;accent-color:#667eea}
         .todo-content{flex:1;min-width:0}
         .todo-text{font-size:0.875rem;color:#212529;line-height:1.4;word-break:break-word;white-space:pre-wrap}
+        .todo-text.completed{text-decoration:line-through;color:#6c757d}
         .todo-text ul, .todo-text ol{margin-left:1.2rem;margin-top:0.25rem;margin-bottom:0.25rem}
-        .todo-text ul{list-style-type:disc}
-        .todo-text ol{list-style-type:decimal}
         
         .todo-actions{display:flex;gap:0.25rem;opacity:1}
         @media(min-width:768px){.todo-actions{opacity:0}.todo-item:hover .todo-actions{opacity:1}}
@@ -107,6 +105,8 @@
         .todo-btn.pdf:hover{background:#ff6b6b;color:#fff}
         .todo-btn.delete{color:#ff6b6b}
         .todo-btn.delete:hover{background:#ff6b6b;color:#fff}
+        .todo-btn.complete{color:#28a745}
+        .todo-btn.complete:hover{background:#28a745;color:#fff}
         
         .todo-attachments{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap}
         .attachment{display:inline-flex;align-items:center;gap:0.25rem;padding:0.25rem 0.5rem;background:#fff;border-radius:4px;font-size:0.75rem;cursor:pointer;border:1px solid #e9ecef}
@@ -122,6 +122,9 @@
         .section.hidden{display:none}
         .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;padding:0 0.5rem}
         .section-header h2{font-size:1rem;font-weight:700;color:#6c757d;display:flex;align-items:center;gap:0.5rem;margin:0}
+        
+        .completed-section{background:#d4edda;border-color:#c3e6cb}
+        .completed-section .section-header h2{color:#155724}
         
         .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:1rem}
         .modal.active{display:flex}
@@ -162,13 +165,6 @@
         .pdf-viewer.active{display:flex}
         .pdf-viewer-header{padding:1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e9ecef}
         .pdf-viewer iframe{flex:1;border:none;width:100%;height:100%}
-        
-        /* PDF Export Styles - WICHTIG */
-        #pdfExportContainer{position:fixed;left:0;top:0;width:210mm;height:0;overflow:hidden;z-index:-1000;opacity:0}
-        
-        ::-webkit-scrollbar{width:6px;height:6px}
-        ::-webkit-scrollbar-track{background:#f1f3f5}
-        ::-webkit-scrollbar-thumb{background:#ced4da;border-radius:3px}
     </style>
 </head>
 <body>
@@ -218,6 +214,7 @@
                 <h1><i class="fas fa-columns"></i> BoardFlow</h1>
                 <button class="btn-icon" onclick="toggleSection('ideas')" title="Ideen"><i class="fas fa-lightbulb"></i></button>
                 <button class="btn-icon" onclick="toggleSection('notes')" title="Rückmeldungen"><i class="fas fa-comments"></i></button>
+                <button class="btn-icon" onclick="toggleSection('completed')" title="Erledigt"><i class="fas fa-check-circle"></i></button>
                 <button class="btn-icon" onclick="toggleSection('trash')" title="Papierkorb"><i class="fas fa-trash-alt"></i></button>
             </div>
             <div class="header-right">
@@ -249,6 +246,14 @@
                 <div class="boards-container" id="notesContainer"></div>
             </div>
             
+            <div class="section completed-section" id="completedSection">
+                <div class="section-header">
+                    <h2><i class="fas fa-check-circle" style="color:#28a745"></i> Erledigt (30 Tage)</h2>
+                    <button class="btn-icon" onclick="toggleSection('completed')"><i class="fas fa-chevron-up"></i></button>
+                </div>
+                <div class="boards-container" id="completedContainer"></div>
+            </div>
+            
             <div class="section trash-section" id="trashSection">
                 <div class="section-header">
                     <h2><i class="fas fa-trash-alt" style="color:#856404"></i> Papierkorb (3 Tage)</h2>
@@ -262,6 +267,7 @@
             <span id="batchCount">0 ausgewählt</span>
             <button onclick="exportSelectedPDFs()"><i class="fas fa-file-pdf"></i> PDF Export</button>
             <button onclick="deleteSelected()" style="background:#ff6b6b"><i class="fas fa-trash"></i> Löschen</button>
+            <button onclick="markSelectedCompleted()" style="background:#28a745"><i class="fas fa-check"></i> Erledigt</button>
             <button onclick="clearSelection()" style="background:#6c757d">Abbrechen</button>
         </div>
     </div>
@@ -341,8 +347,6 @@
         </div>
         <iframe id="pdfFrame"></iframe>
     </div>
-
-    <div id="pdfExportContainer"></div>
 
     <script type="module">
         await new Promise(resolve => {
@@ -433,9 +437,9 @@
 
         async function createDefaultBoards() {
             const defaultBoards = [
-                { name: 'To Do', color: '#ff6b6b', section: 'main', todos: [], deletedTodos: [] },
-                { name: 'In Progress', color: '#4ecdc4', section: 'main', todos: [], deletedTodos: [] },
-                { name: 'Done', color: '#96ceb4', section: 'main', todos: [], deletedTodos: [] }
+                { name: 'To Do', color: '#ff6b6b', section: 'main', todos: [], completedTodos: [], deletedTodos: [] },
+                { name: 'In Progress', color: '#4ecdc4', section: 'main', todos: [], completedTodos: [], deletedTodos: [] },
+                { name: 'Done', color: '#96ceb4', section: 'main', todos: [], completedTodos: [], deletedTodos: [] }
             ];
             for (const board of defaultBoards) {
                 await addDoc(collection(db, 'boards'), {
@@ -449,30 +453,107 @@
         function loadBoards() {
             if (unsubscribe) unsubscribe();
             const q = query(collection(db, 'boards'), where('userId', '==', currentUser.uid));
-            unsubscribe = onSnapshot(q, (snapshot) => {
+            unsubscribe = onSnapshot(q, async (snapshot) => {
                 boards = [];
                 snapshot.forEach(doc => {
                     boards.push({ id: doc.id, ...doc.data() });
                 });
+                // Automatische Bereinigung alter erledigter Todos (30 Tage)
+                await cleanupOldCompletedTodos();
                 render();
             });
+        }
+
+        async function cleanupOldCompletedTodos() {
+            const now = new Date();
+            let needsUpdate = false;
+            
+            for (const board of boards) {
+                if (!board.completedTodos) continue;
+                
+                const validCompleted = [];
+                for (const todo of board.completedTodos) {
+                    const completedDate = new Date(todo.completedAt);
+                    const diffTime = Math.abs(now - completedDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays <= 30) {
+                        validCompleted.push(todo);
+                    } else {
+                        needsUpdate = true; // Markiert zum Löschen (wird nicht mehr ins Array aufgenommen)
+                    }
+                }
+                
+                if (validCompleted.length !== board.completedTodos.length) {
+                    await updateDoc(doc(db, 'boards', board.id), { 
+                        completedTodos: validCompleted 
+                    });
+                }
+            }
         }
 
         function render() {
             const main = document.getElementById('boardsContainer');
             const ideas = document.getElementById('ideasContainer');
             const notes = document.getElementById('notesContainer');
+            const completed = document.getElementById('completedContainer');
             const trash = document.getElementById('trashContainer');
             
             main.innerHTML = '';
             ideas.innerHTML = '';
             notes.innerHTML = '';
+            completed.innerHTML = '';
             trash.innerHTML = '';
             
             boards.filter(b => b.section === 'main').forEach(b => main.appendChild(createBoardEl(b)));
             boards.filter(b => b.section === 'ideas').forEach(b => ideas.appendChild(createBoardEl(b)));
             boards.filter(b => b.section === 'notes').forEach(b => notes.appendChild(createBoardEl(b)));
             
+            // Erledigte Todos aus allen Boards sammeln
+            const allCompletedTodos = [];
+            boards.forEach(board => {
+                if (board.completedTodos) {
+                    board.completedTodos.forEach((todo, idx) => {
+                        allCompletedTodos.push({...todo, boardId: board.id, boardName: board.name, index: idx});
+                    });
+                }
+            });
+            
+            if (allCompletedTodos.length > 0) {
+                const completedBoard = document.createElement('div');
+                completedBoard.className = 'board';
+                completedBoard.style.opacity = '0.9';
+                completedBoard.innerHTML = `
+                    <div class="board-header" style="background:#28a745">
+                        <h3>Erledigte Aufgaben (${allCompletedTodos.length})</h3>
+                    </div>
+                    <div class="board-todos">
+                        ${allCompletedTodos.map(t => `
+                            <div class="todo-item completed">
+                                <div class="todo-header">
+                                    <div class="todo-content" style="flex:1">
+                                        <div class="todo-text completed">${formatTextForDisplay(t.text)}</div>
+                                        <div style="font-size:0.75rem;color:#28a745;margin-top:0.5rem">
+                                            <i class="fas fa-check"></i> Erledigt: ${new Date(t.completedAt).toLocaleDateString('de-DE')} • ${escape(t.boardName)}
+                                        </div>
+                                    </div>
+                                    <div class="todo-actions">
+                                        <button class="todo-btn complete" onclick="uncompleteTodo('${t.boardId}', ${t.index})" title="Wiederherstellen">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                        <button class="todo-btn pdf" onclick="exportSinglePDF('${t.boardId}', ${t.index}, true)" title="PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                completed.appendChild(completedBoard);
+            }
+            
+            // Papierkorb (3 Tage)
             const allDeletedTodos = [];
             boards.forEach(board => {
                 if (board.deletedTodos) {
@@ -501,7 +582,7 @@
                         ${allDeletedTodos.map(t => `
                             <div class="todo-item trash-item">
                                 <div class="todo-header">
-                                    <div class="todo-text">${escape(t.text)}</div>
+                                    <div class="todo-text">${formatTextForDisplay(t.text)}</div>
                                     <button class="todo-btn restore-btn" onclick="restoreTodo('${t.boardId}', ${t.index})" title="Wiederherstellen">
                                         <i class="fas fa-trash-restore"></i>
                                     </button>
@@ -545,6 +626,9 @@
                             ` : ''}
                         </div>
                         <div class="todo-actions">
+                            <button class="todo-btn complete" onclick="event.stopPropagation();markCompleted('${board.id}', ${idx})" title="Als erledigt markieren">
+                                <i class="fas fa-check"></i>
+                            </button>
                             <button class="todo-btn pdf" onclick="event.stopPropagation();exportSinglePDF('${board.id}', ${idx})" title="PDF">
                                 <i class="fas fa-file-pdf"></i>
                             </button>
@@ -617,6 +701,57 @@
             render();
         };
 
+        window.markSelectedCompleted = async () => {
+            if (!confirm(`${selectedTodos.size} Todos als erledigt markieren?`)) return;
+            
+            for (const key of Array.from(selectedTodos)) {
+                const [boardId, index] = key.split('-');
+                await markCompleted(boardId, parseInt(index));
+            }
+            selectedTodos.clear();
+            updateBatchActions();
+        };
+
+        window.markCompleted = async (boardId, index) => {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+            
+            const todos = [...(board.todos || [])];
+            const completedTodo = todos[index];
+            todos.splice(index, 1);
+            
+            const completedTodos = [...(board.completedTodos || [])];
+            completedTodos.push({
+                ...completedTodo,
+                completedAt: new Date().toISOString()
+            });
+            
+            await updateDoc(doc(db, 'boards', boardId), { 
+                todos, 
+                completedTodos 
+            });
+        };
+
+        window.uncompleteTodo = async (boardId, index) => {
+            const board = boards.find(b => b.id === boardId);
+            if (!board) return;
+            
+            const completedTodos = [...(board.completedTodos || [])];
+            const todo = completedTodos[index];
+            completedTodos.splice(index, 1);
+            
+            const todos = [...(board.todos || [])];
+            todos.push({
+                ...todo,
+                restoredFromCompleted: new Date().toISOString()
+            });
+            
+            await updateDoc(doc(db, 'boards', boardId), { 
+                todos, 
+                completedTodos 
+            });
+        };
+
         window.deleteSelected = async () => {
             if (!confirm(`${selectedTodos.size} Todos wirklich löschen?`)) return;
             
@@ -642,7 +777,10 @@
                 deletedAt: new Date().toISOString()
             });
             
-            await updateDoc(doc(db, 'boards', boardId), { todos, deletedTodos });
+            await updateDoc(doc(db, 'boards', boardId), { 
+                todos, 
+                deletedTodos 
+            });
         }
 
         window.quickDeleteTodo = async (boardId, index) => {
@@ -664,7 +802,10 @@
                 restoredAt: new Date().toISOString()
             });
             
-            await updateDoc(doc(db, 'boards', boardId), { todos, deletedTodos });
+            await updateDoc(doc(db, 'boards', boardId), { 
+                todos, 
+                deletedTodos 
+            });
         };
 
         window.openBoardModal = () => {
@@ -703,6 +844,7 @@
                     await addDoc(collection(db, 'boards'), {
                         ...data,
                         todos: [],
+                        completedTodos: [],
                         deletedTodos: [],
                         createdAt: serverTimestamp()
                     });
@@ -789,10 +931,10 @@
             closeModal('todoModal');
         };
 
-        // KORRIGIERTE PDF FUNKTIONEN
-        window.exportSinglePDF = async (boardId, index) => {
+        // KORRIGIERTER PDF EXPORT
+        window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
-            const todo = board.todos[index];
+            const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
             await generatePDF([{...todo, boardName: board.name}]);
         };
 
@@ -819,34 +961,54 @@
         };
 
         async function generatePDF(todos) {
-            // Container vorbereiten
-            const container = document.getElementById('pdfExportContainer');
+            // Temporären Container erstellen (sichtbar aber unsichtbar für den User)
+            const tempDiv = document.createElement('div');
+            tempDiv.style.position = 'absolute';
+            tempDiv.style.left = '-9999px';
+            tempDiv.style.top = '0';
+            tempDiv.style.width = '210mm';
+            tempDiv.style.background = 'white';
+            document.body.appendChild(tempDiv);
+            
             const date = new Date().toLocaleString('de-DE');
             const userEmail = currentUser.email;
             
             let pagesHtml = '';
             todos.forEach((todo, idx) => {
-                // Für jedes Todo eine Seite
+                // Strip HTML tags for plain text display in PDF but preserve basic formatting
+                const tempTextDiv = document.createElement('div');
+                tempTextDiv.innerHTML = todo.text;
+                const plainText = tempTextDiv.innerText || todo.text;
+                
+                // Convert HTML lists to simple text lists for PDF
+                let formattedText = todo.text
+                    .replace(/<\/li>/gi, '\n')
+                    .replace(/<li>/gi, '• ')
+                    .replace(/<\/p>/gi, '\n\n')
+                    .replace(/<br\s*\/?>/gi, '\n')
+                    .replace(/<[^>]+>/g, ''); // Remove remaining HTML tags
+                
                 pagesHtml += `
-                    <div style="width:210mm;min-height:297mm;padding:20mm;background:#fff;font-family:Inter,sans-serif;box-sizing:border-box;${idx > 0 ? 'page-break-before:always' : ''}">
-                        <div style="border-bottom:3px solid #667eea;padding-bottom:20px;margin-bottom:30px;text-align:center">
-                            <h1 style="color:#667eea;font-size:28px;margin:0 0 10px 0;font-weight:700">BoardFlow Todo</h1>
-                            <p style="color:#6c757d;font-size:14px;margin:0">Export vom ${date}</p>
+                    <div style="width:210mm;min-height:297mm;padding:20mm;background:#fff;font-family:Arial,Helvetica,sans-serif;box-sizing:border-box;page-break-after:always;position:relative;">
+                        <!-- Header -->
+                        <div style="border-bottom:3px solid #667eea;padding-bottom:15px;margin-bottom:30px;text-align:center;">
+                            <h1 style="color:#667eea;font-size:32px;margin:0 0 8px 0;font-weight:700;">BoardFlow Todo</h1>
+                            <p style="color:#6c757d;font-size:12px;margin:0;">Export vom ${date}</p>
                         </div>
                         
-                        <div style="background:#f8f9fa;border-radius:12px;padding:30px;margin-bottom:30px;border:1px solid #e9ecef">
-                            <div style="font-size:16px;color:#6c757d;margin-bottom:15px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Inhalt</div>
-                            <div style="font-size:16px;line-height:1.8;color:#212529">
-                                ${todo.text}
-                            </div>
+                        <!-- Content Box -->
+                        <div style="background:#f8f9fa;border-radius:12px;padding:30px;margin-bottom:30px;border:2px solid #e9ecef;min-height:400px;">
+                            <div style="font-size:11px;color:#6c757d;margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Inhalt</div>
+                            <div style="font-size:14px;line-height:1.8;color:#212529;white-space:pre-wrap;">${escapeForPdf(formattedText)}</div>
+                            
                             ${todo.attachments?.length ? `
-                                <div style="margin-top:20px;padding-top:20px;border-top:1px solid #dee2e6">
-                                    <div style="font-size:14px;color:#6c757d;margin-bottom:10px">Anhänge:</div>
-                                    <div style="display:flex;gap:10px;flex-wrap:wrap">
+                                <div style="margin-top:25px;padding-top:20px;border-top:1px solid #dee2e6;">
+                                    <div style="font-size:11px;color:#6c757d;margin-bottom:8px;font-weight:600;">ANHÄNGE</div>
+                                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
                                         ${todo.attachments.map(a => `
-                                            <span style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:#fff;border-radius:6px;font-size:13px;color:#495057;border:1px solid #dee2e6">
-                                                <i class="fas ${a.name.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-image'}"></i>
-                                                ${escape(a.name)}
+                                            <span style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:#fff;border-radius:6px;font-size:12px;color:#495057;border:1px solid #dee2e6;">
+                                                <span style="color:${a.name.endsWith('.pdf') ? '#ff6b6b' : '#4ecdc4'}">●</span>
+                                                ${escapeForPdf(a.name)}
                                             </span>
                                         `).join('')}
                                     </div>
@@ -854,12 +1016,13 @@
                             ` : ''}
                         </div>
                         
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:20px;border-top:2px solid #e9ecef;margin-top:40px;font-size:13px;color:#6c757d">
+                        <!-- Footer -->
+                        <div style="position:absolute;bottom:20mm;left:20mm;right:20mm;display:flex;justify-content:space-between;align-items:center;padding-top:15px;border-top:2px solid #e9ecef;font-size:10px;color:#6c757d;">
                             <div>
-                                <strong>Board:</strong> ${escape(todo.boardName)}<br>
+                                <strong>Board:</strong> ${escapeForPdf(todo.boardName)}<br>
                                 <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')}
                             </div>
-                            <div style="text-align:right">
+                            <div style="text-align:right;">
                                 <strong>Benutzer:</strong><br>
                                 ${userEmail}
                             </div>
@@ -868,54 +1031,44 @@
                 `;
             });
             
-            container.innerHTML = pagesHtml;
-            
-            // WICHTIG: Container kurz sichtbar machen für html2pdf
-            container.style.height = 'auto';
-            container.style.position = 'relative';
-            container.style.left = '0';
-            container.style.top = '0';
-            container.style.zIndex = '-1';
-            container.style.opacity = '0.01'; // Fast unsichtbar aber renderbar
+            tempDiv.innerHTML = pagesHtml;
             
             // Warten bis DOM gerendert
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            const opt = {
-                margin: 0,
-                filename: `BoardFlow-Export-${new Date().toISOString().split('T')[0]}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { 
-                    scale: 2, 
-                    useCORS: true, 
-                    logging: false,
-                    windowWidth: 1200 // Wichtig für korrekte Breite
-                },
-                jsPDF: { 
-                    unit: 'mm', 
-                    format: 'a4', 
-                    orientation: 'portrait'
-                }
-            };
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             try {
-                await html2pdf().set(opt).from(container).save();
-                
-                // Cleanup
-                container.style.height = '0';
-                container.style.position = 'fixed';
-                container.style.left = '0';
-                container.style.top = '0';
-                container.innerHTML = '';
-                
+                await html2pdf().from(tempDiv).set({
+                    margin: 0,
+                    filename: `BoardFlow-Export-${new Date().toISOString().split('T')[0]}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
+                        scale: 2,
+                        useCORS: true,
+                        logging: false,
+                        windowWidth: 1200
+                    },
+                    jsPDF: { 
+                        unit: 'mm', 
+                        format: 'a4', 
+                        orientation: 'portrait'
+                    }
+                }).save();
             } catch (error) {
                 console.error('PDF Error:', error);
-                alert('PDF konnte nicht erstellt werden. Fehler: ' + error.message);
-                
-                // Cleanup bei Fehler
-                container.style.height = '0';
-                container.style.position = 'fixed';
+                alert('PDF konnte nicht erstellt werden: ' + error.message);
+            } finally {
+                // Cleanup
+                document.body.removeChild(tempDiv);
             }
+        }
+
+        function escapeForPdf(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         window.handleFile = (input) => {
