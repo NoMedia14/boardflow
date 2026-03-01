@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BoardFlow - PDF Fix</title>
+    <title>BoardFlow</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -58,9 +58,9 @@
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529;-webkit-text-size-adjust:100%}
         
-        /* Print Styles - Wichtig für PDF Export */
+        /* Print Styles */
         @media print {
-            @page { margin: 0; size: auto; }
+            @page { margin: 15mm; size: auto; }
             body * { visibility: hidden; }
             #printFrame, #printFrame * { visibility: visible; }
             #printFrame { position: absolute; left: 0; top: 0; width: 100%; }
@@ -98,7 +98,22 @@
         .btn-success{background:#667eea;color:#fff}
         .btn-secondary{background:#e9ecef;color:#495057}
         .btn-danger-sm{background:#ff6b6b;color:#fff;padding:0.5rem;border:none;border-radius:6px;cursor:pointer}
-        .btn-icon{width:36px;height:36px;border-radius:8px;border:none;background:#f8f9fa;color:#6c757d;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.875rem}
+        
+        /* Header Icons - Active/Inactive States */
+        .btn-icon{width:36px;height:36px;border-radius:8px;border:none;background:#f8f9fa;color:#6c757d;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.875rem;transition:all 0.2s}
+        .btn-icon:hover{background:#e9ecef}
+        .btn-icon.active{background:#667eea;color:#fff}
+        .btn-icon.active:hover{background:#5568d3}
+        
+        /* Spezifische Farben für aktive Zustände */
+        .btn-icon.active-ideas{background:#ffc107;color:#212529}
+        .btn-icon.active-ideas:hover{background:#e0a800}
+        .btn-icon.active-notes{background:#6f42c1;color:#fff}
+        .btn-icon.active-notes:hover{background:#5a32a3}
+        .btn-icon.active-completed{background:#28a745;color:#fff}
+        .btn-icon.active-completed:hover{background:#218838}
+        .btn-icon.active-trash{background:#856404;color:#fff}
+        .btn-icon.active-trash:hover{background:#6d5203}
         
         .main-content{padding:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
         .boards-container{display:flex;gap:1rem;min-width:fit-content;padding-bottom:1rem}
@@ -208,7 +223,6 @@
             .pdf-viewer-header span { max-width: 150px !important; font-size: 0.875rem; }
         }
         
-        /* Hidden Print Frame */
         #printFrame { position: absolute; left: -9999px; top: 0; width: 210mm; background: white; }
     </style>
 </head>
@@ -257,10 +271,10 @@
         <header class="header">
             <div class="header-left">
                 <h1><i class="fas fa-columns"></i> BoardFlow</h1>
-                <button class="btn-icon" onclick="toggleSection('ideas')" title="Ideen"><i class="fas fa-lightbulb"></i></button>
-                <button class="btn-icon" onclick="toggleSection('notes')" title="Rückmeldungen"><i class="fas fa-comments"></i></button>
-                <button class="btn-icon" onclick="toggleSection('completed')" title="Erledigt"><i class="fas fa-check-circle"></i></button>
-                <button class="btn-icon" onclick="toggleSection('trash')" title="Papierkorb"><i class="fas fa-trash-alt"></i></button>
+                <button class="btn-icon" id="btn-ideas" onclick="toggleSection('ideas')" title="Ideen"><i class="fas fa-lightbulb"></i></button>
+                <button class="btn-icon" id="btn-notes" onclick="toggleSection('notes')" title="Rückmeldungen"><i class="fas fa-comments"></i></button>
+                <button class="btn-icon" id="btn-completed" onclick="toggleSection('completed')" title="Erledigt"><i class="fas fa-check-circle"></i></button>
+                <button class="btn-icon" id="btn-trash" onclick="toggleSection('trash')" title="Papierkorb"><i class="fas fa-trash-alt"></i></button>
             </div>
             <div class="header-right">
                 <div class="user-info">
@@ -410,7 +424,6 @@
         </div>
     </div>
 
-    <!-- Hidden Container for Print to PDF -->
     <div id="printFrame"></div>
 
     <script type="module">
@@ -438,6 +451,7 @@
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').classList.add('active');
                 loadBoards();
+                updateHeaderButtonStates(); // Initiale Button-Stati setzen
             } else {
                 currentUser = null;
                 document.getElementById('authScreen').style.display = 'flex';
@@ -920,7 +934,7 @@
             closeModal('todoModal');
         };
 
-        // NEUE ZUVERLÄSSIGE PDF FUNKTIONEN mit Browser Print
+        // VEREINFACHTE PDF FUNKTIONEN - Nur ToDos in Kästen
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
@@ -950,9 +964,7 @@
         };
 
         async function generatePDF(todos) {
-            const printFrame = document.getElementById('printFrame');
-            const date = new Date().toLocaleString('de-DE');
-            const userEmail = currentUser ? currentUser.email : 'Unbekannt';
+            const printWindow = window.open('', '_blank');
             
             let html = `
                 <html>
@@ -960,59 +972,52 @@
                     <title>BoardFlow Export</title>
                     <style>
                         @page { size: A4; margin: 20mm; }
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .page { page-break-after: always; padding: 40px; position: relative; min-height: 100vh; box-sizing: border-box; }
-                        .page:last-child { page-break-after: auto; }
-                        .header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
-                        .header h1 { color: #667eea; font-size: 28px; margin: 0; }
-                        .meta { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 30px; font-size: 12px; color: #6c757d; }
-                        .content { background: #ffffff; border: 1px solid #dee2e6; border-radius: 8px; padding: 30px; min-height: 400px; font-size: 14px; }
-                        .content ul, .content ol { margin-left: 20px; }
-                        .attachments { margin-top: 30px; }
-                        .attachments-title { font-size: 11px; color: #6c757d; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-                        .attachment-tag { background: #f8f9fa; padding: 8px 12px; border-radius: 4px; font-size: 12px; border: 1px solid #dee2e6; display: inline-block; margin-right: 5px; margin-bottom: 5px; }
-                        .footer { position: absolute; bottom: 40px; left: 40px; right: 40px; border-top: 1px solid #dee2e6; padding-top: 20px; font-size: 10px; color: #6c757d; display: flex; justify-content: space-between; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            line-height: 1.6; 
+                            color: #333;
+                            padding: 20px;
+                        }
+                        .todo-box { 
+                            border: 2px solid #dee2e6; 
+                            border-radius: 12px; 
+                            padding: 20px; 
+                            margin-bottom: 20px; 
+                            background: #f8f9fa;
+                            page-break-inside: avoid;
+                        }
+                        .todo-box:last-child {
+                            margin-bottom: 0;
+                        }
+                        .todo-content {
+                            font-size: 14px;
+                            color: #212529;
+                        }
+                        .todo-content ul, .todo-content ol {
+                            margin-left: 20px;
+                            padding-left: 0;
+                        }
+                        .todo-content li {
+                            margin-bottom: 5px;
+                        }
+                        @media print {
+                            body { padding: 0; }
+                            .todo-box { break-inside: avoid; }
+                        }
                     </style>
                 </head>
                 <body>
             `;
             
-            todos.forEach((todo, idx) => {
-                // Sicheres HTML bereinigen
+            todos.forEach((todo) => {
+                // HTML bereinigen aber Formatierung erhalten
                 let textContent = todo.text
                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
                 
                 html += `
-                    <div class="page">
-                        <div class="header">
-                            <h1>BoardFlow</h1>
-                            <p style="color: #6c757d; font-size: 12px; margin: 5px 0 0 0;">Todo Export</p>
-                        </div>
-                        
-                        <div class="meta">
-                            <strong>Board:</strong> ${escapeHtml(todo.boardName)} | 
-                            <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')} | 
-                            <strong>Export:</strong> ${date}
-                        </div>
-                        
-                        <div class="content">
+                    <div class="todo-box">
+                        <div class="todo-content">
                             ${textContent}
-                        </div>
-                        
-                        ${todo.attachments?.length ? `
-                            <div class="attachments">
-                                <div class="attachments-title">Anhänge</div>
-                                <div>
-                                    ${todo.attachments.map(a => `
-                                        <span class="attachment-tag">${escapeHtml(a.name)}</span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="footer">
-                            <span>Erstellt von: ${userEmail}</span>
-                            <span>Seite ${idx + 1} von ${todos.length}</span>
                         </div>
                     </div>
                 `;
@@ -1020,17 +1025,12 @@
             
             html += '</body></html>';
             
-            // In neues Fenster schreiben und drucken
-            const printWindow = window.open('', '_blank');
             printWindow.document.write(html);
             printWindow.document.close();
             
-            // Warten bis Styles geladen sind
             setTimeout(() => {
                 printWindow.print();
-                // Optional: Fenster schließen nach Druck (funktioniert nicht immer)
-                // printWindow.close();
-            }, 500);
+            }, 300);
         }
 
         window.handleFile = (input) => {
@@ -1134,16 +1134,45 @@
         };
 
         window.closeModal = (id) => {
-            document.getElementById(id).classList.remove('active');
+            document.getElementById(id).classList.add('active');
             editingBoardId = null;
             editingTodoId = null;
             currentBoardId = null;
             tempAttachments = [];
         };
 
+        // KORRIGIERTE toggleSection Funktion mit Button-States
         window.toggleSection = (section) => {
-            document.getElementById(section + 'Section').classList.toggle('hidden');
+            const sectionEl = document.getElementById(section + 'Section');
+            const btn = document.getElementById('btn-' + section);
+            
+            sectionEl.classList.toggle('hidden');
+            
+            // Button State aktualisieren
+            if (sectionEl.classList.contains('hidden')) {
+                // Sektion ist jetzt versteckt -> Button inaktiv (grau)
+                btn.classList.remove('active', 'active-ideas', 'active-notes', 'active-completed', 'active-trash');
+            } else {
+                // Sektion ist jetzt sichtbar -> Button aktiv (farbig)
+                btn.classList.add('active', 'active-' + section);
+            }
         };
+
+        // Funktion zum Initialisieren der Button-States beim Laden
+        function updateHeaderButtonStates() {
+            ['ideas', 'notes', 'completed', 'trash'].forEach(section => {
+                const sectionEl = document.getElementById(section + 'Section');
+                const btn = document.getElementById('btn-' + section);
+                
+                if (sectionEl && btn) {
+                    if (!sectionEl.classList.contains('hidden')) {
+                        btn.classList.add('active', 'active-' + section);
+                    } else {
+                        btn.classList.remove('active', 'active-ideas', 'active-notes', 'active-completed', 'active-trash');
+                    }
+                }
+            });
+        }
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
