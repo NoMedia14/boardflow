@@ -155,12 +155,12 @@
             align-items:flex-start
         }
         
-        /* Flexibele Board-Breiten */
+        /* KORRIGIERT: Flexibele Board-Breiten - nutzen ganzen Platz aus */
         .board{
             background:#fff;
             border-radius:16px;
-            min-width:clamp(280px, 25vw, 450px); /* Flexible Breite */
-            width:clamp(280px, 25vw, 450px);
+            min-width:280px;
+            flex:1;
             display:flex;
             flex-direction:column;
             box-shadow:0 4px 12px rgba(0,0,0,0.08);
