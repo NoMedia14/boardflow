@@ -1,4 +1,4 @@
-const firebaseConfig = {
+window.firebaseConfig = {
   apiKey: "AIzaSyAxBCBta8uZgk-5sJx3ExoJxW1tc2I9240",
   authDomain: "boardflow-9a92f.firebaseapp.com",
   projectId: "boardflow-9a92f",
