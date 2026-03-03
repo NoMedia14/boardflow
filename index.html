@@ -205,7 +205,7 @@
             height: 3px;
             background: #667eea;
             border-radius: 2px;
-            margin: -2px 0;
+            margin: 2px 0;
             opacity: 0;
             transition: opacity 0.2s;
             pointer-events: none;
@@ -700,7 +700,7 @@
             draggedItem = { boardId, index };
             e.target.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', JSON.stringify(draggedItem));
+            e.dataTransfer.setData('application/json', JSON.stringify(draggedItem));
         };
 
         window.handleDragEnd = (e) => {
@@ -713,7 +713,6 @@
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             
-            // Zeige Drop-Indikator an der richtigen Position
             const indicator = document.getElementById(`indicator-${boardId}-${index}`);
             if (indicator) {
                 document.querySelectorAll('.drop-indicator').forEach(el => el.classList.remove('active'));
@@ -740,57 +739,63 @@
             document.querySelectorAll('.board').forEach(el => el.classList.remove('drag-over'));
             
             try {
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const data = e.dataTransfer.getData('application/json');
                 if (!data) return;
                 
-                moveTodo(data.boardId, data.index, targetBoardId, targetIndex);
+                const parsed = JSON.parse(data);
+                moveTodo(parsed.boardId, parsed.index, targetBoardId, targetIndex);
             } catch (err) {
                 console.error('Drop error:', err);
             }
         };
 
         window.moveTodo = async (sourceBoardId, sourceIndex, targetBoardId, targetIndex) => {
-            const sourceBoard = boards.find(b => b.id === sourceBoardId);
-            const targetBoard = boards.find(b => b.id === targetBoardId);
+            // Finde die Boards
+            const sourceBoardIndex = boards.findIndex(b => b.id === sourceBoardId);
+            const targetBoardIndex = boards.findIndex(b => b.id === targetBoardId);
             
-            if (!sourceBoard || !targetBoard) return;
+            if (sourceBoardIndex === -1 || targetBoardIndex === -1) return;
             
-            const todo = sourceBoard.todos[sourceIndex];
-            if (!todo) return;
+            const sourceBoard = boards[sourceBoardIndex];
+            const targetBoard = boards[targetBoardIndex];
             
-            // Entferne aus Source
+            // Hole das zu verschiebende Todo
             const sourceTodos = [...(sourceBoard.todos || [])];
-            sourceTodos.splice(sourceIndex, 1);
+            if (sourceIndex < 0 || sourceIndex >= sourceTodos.length) return;
             
-            // Füge zu Target hinzu
-            const targetTodos = [...(targetBoard.todos || [])];
+            const [movedTodo] = sourceTodos.splice(sourceIndex, 1);
             
-            // Berechne korrekten Ziel-Index
+            // Ziel-Todos vorbereiten
+            const targetTodos = targetBoardId === sourceBoardId ? sourceTodos : [...(targetBoard.todos || [])];
+            
+            // Berechne Einfügeposition
             let insertIndex = targetIndex;
-            if (sourceBoardId === targetBoardId) {
-                if (sourceIndex < targetIndex) {
-                    insertIndex = targetIndex - 1;
-                }
+            if (targetIndex === null || targetIndex === undefined) {
+                insertIndex = targetTodos.length;
             }
             
-            if (insertIndex === null || insertIndex === undefined || insertIndex >= targetTodos.length) {
-                targetTodos.push(todo);
-            } else {
-                targetTodos.splice(insertIndex, 0, todo);
+            // Korrigiere Index wenn wir im gleichen Board verschieben und nach hinten ziehen
+            if (targetBoardId === sourceBoardId && sourceIndex < targetIndex) {
+                insertIndex = Math.max(0, insertIndex - 1);
             }
             
-            // Batch Update
+            // Füge Todo ein
+            targetTodos.splice(insertIndex, 0, movedTodo);
+            
+            // Firebase Update
             try {
-                if (sourceBoardId === targetBoardId) {
+                if (targetBoardId === sourceBoardId) {
+                    // Gleiches Board - nur ein Update
                     await updateDoc(doc(db, 'boards', sourceBoardId), { todos: targetTodos });
                 } else {
-                    await Promise.all([
-                        updateDoc(doc(db, 'boards', sourceBoardId), { todos: sourceTodos }),
-                        updateDoc(doc(db, 'boards', targetBoardId), { todos: targetTodos })
-                    ]);
+                    // Verschiedene Boards - zwei Updates
+                    await updateDoc(doc(db, 'boards', sourceBoardId), { todos: sourceTodos });
+                    await updateDoc(doc(db, 'boards', targetBoardId), { todos: targetTodos });
                 }
             } catch (error) {
+                console.error('Move error:', error);
                 alert('Fehler beim Verschieben: ' + error.message);
+                render(); // Re-render bei Fehler
             }
         };
 
@@ -909,7 +914,7 @@
             todos.forEach((t, idx) => {
                 const isSelected = selectedTodos.has(`${board.id}-${idx}`);
                 
-                // Drop-Indikator vor jedem Todo (außer dem ersten, wenn es oben ist)
+                // Drop-Indikator vor dem Todo
                 todosHtml += `<div class="drop-indicator" id="indicator-${board.id}-${idx}"></div>`;
                 
                 todosHtml += `
@@ -1188,7 +1193,7 @@
             closeModal('todoModal');
         };
 
-        // PDF FUNKTIONEN - Ohne neues Fenster
+        // PDF FUNKTIONEN - Im Viewer anzeigen
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
@@ -1295,7 +1300,7 @@
                 </head>
                 <body>
                     <div class="header">
-                        <h1><i class="fas fa-columns"></i> BoardFlow Export</h1>
+                        <h1>BoardFlow Export</h1>
                         <p>Erstellt am ${new Date().toLocaleDateString('de-DE')} | ${todos.length} Todo(s)</p>
                     </div>
             `;
@@ -1307,15 +1312,15 @@
                 html += `
                     <div class="todo-box">
                         <div class="todo-header">
-                            <i class="fas fa-folder"></i> ${escapeHtml(todo.boardName)} | 
-                            <i class="fas fa-calendar"></i> ${new Date(todo.createdAt).toLocaleDateString('de-DE')}
+                            Board: ${escapeHtml(todo.boardName)} | 
+                            Erstellt: ${new Date(todo.createdAt).toLocaleDateString('de-DE')}
                         </div>
                         <div class="todo-content">
                             ${textContent}
                         </div>
                         ${todo.attachments?.length ? `
                             <div class="attachments">
-                                <i class="fas fa-paperclip"></i> Anhänge: ${todo.attachments.length}
+                                Anhänge: ${todo.attachments.length}
                             </div>
                         ` : ''}
                     </div>
@@ -1324,19 +1329,12 @@
             
             html += '</body></html>';
             
-            // Speichere HTML für Download
+            // Erstelle Blob und zeige im Viewer an
             currentPdfBlob = new Blob([html], { type: 'text/html' });
             const url = URL.createObjectURL(currentPdfBlob);
             
             document.getElementById('pdfFrame').src = url;
             document.getElementById('pdfViewer').classList.add('active');
-            
-            // Cleanup vorheriger URL wenn vorhanden
-            setTimeout(() => {
-                if (document.getElementById('pdfFrame').src !== url) {
-                    URL.revokeObjectURL(url);
-                }
-            }, 1000);
         }
 
         window.downloadCurrentPdf = () => {
@@ -1387,7 +1385,7 @@
                     document.getElementById('pdfViewerTitle').textContent = name;
                     document.getElementById('pdfFrame').src = displayUrl;
                     document.getElementById('pdfViewer').classList.add('active');
-                    currentPdfBlob = null; // Nicht unser generiertes PDF
+                    currentPdfBlob = null;
                 } else {
                     window.open(url, '_blank');
                 }
