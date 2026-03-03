@@ -57,10 +57,7 @@
     </script>
     
     <style>
-        :root {
-            --zoom: 1;
-        }
-        
+        :root { --zoom: 1; }
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#f8f9fa;min-height:100vh;color:#212529;-webkit-text-size-adjust:100%}
         
@@ -92,7 +89,6 @@
         .header-left{display:flex;align-items:center;gap:0.5rem;flex:1}
         .header-center{flex:1;display:flex;justify-content:center;align-items:center;gap:0.5rem}
         .header-right{display:flex;align-items:center;gap:0.5rem;flex:1;justify-content:flex-end}
-        
         .header h1{font-size:1.1rem;font-weight:800;margin:0}
         .header h1 i{color:#667eea;margin-right:0.25rem}
         .user-info{display:none}
@@ -121,110 +117,38 @@
             .btn-app{padding:0.625rem 1.25rem;font-size:0.875rem}
         }
         
-        .main-content{
-            padding:1rem;
-            overflow-x:auto;
-            -webkit-overflow-scrolling:touch;
-            zoom: var(--zoom);
-            -moz-transform: scale(var(--zoom));
-            -moz-transform-origin: 0 0;
-        }
+        .main-content{padding:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch;zoom:var(--zoom);-moz-transform:scale(var(--zoom));-moz-transform-origin:0 0}
+        .boards-container{display:flex;gap:1rem;min-width:fit-content;padding-bottom:1rem;align-items:flex-start}
         
-        .boards-container{
-            display:flex;
-            gap:1rem;
-            min-width:fit-content;
-            padding-bottom:1rem;
-            align-items:flex-start
-        }
-        
-        .board{
-            background:#fff;
-            border-radius:16px;
-            min-width:280px;
-            flex:1;
-            display:flex;
-            flex-direction:column;
-            box-shadow:0 4px 12px rgba(0,0,0,0.08);
-            height:fit-content;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .board.drag-over {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
-            border: 2px dashed #667eea;
-        }
-        
+        .board{background:#fff;border-radius:16px;min-width:280px;flex:1;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.08);height:fit-content;transition:transform 0.2s,box-shadow 0.2s}
+        .board.drag-over{transform:translateY(-5px);box-shadow:0 8px 24px rgba(102,126,234,0.25);border:2px dashed #667eea}
         .board-header{padding:1rem;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center}
         .board-header h3{font-size:0.9375rem;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.2);margin:0}
         .board-actions{display:flex;gap:0.25rem}
         .board-actions button{width:28px;height:28px;border-radius:6px;border:none;background:rgba(255,255,255,0.25);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem}
         
-        .board-todos{
-            padding:0.75rem;
-            display:flex;
-            flex-direction:column;
-            gap:0.5rem;
-            min-height: 100px;
-            transition: background-color 0.2s;
-        }
+        .board-todos{padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;min-height:100px;transition:background-color 0.2s}
+        .board-todos.drag-over{background-color:#e3f2fd;border-radius:12px}
         
-        .board-todos.drag-over {
-            background-color: #e3f2fd;
-            border-radius: 12px;
-        }
-        
-        .todo-item{
-            background:#f8f9fa;
-            border-radius:12px;
-            padding:0.75rem;
-            border:2px solid transparent;
-            transition:all 0.2s;
-            position:relative;
-            cursor: grab;
-            user-select: none;
-        }
-        
-        .todo-item:active {
-            cursor: grabbing;
-        }
-        
-        .todo-item.dragging {
-            opacity: 0.5;
-            border: 2px dashed #667eea;
-            transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        
+        .todo-item{background:#f8f9fa;border-radius:12px;padding:0.75rem;border:2px solid transparent;transition:all 0.2s;position:relative;cursor:grab;user-select:none}
+        .todo-item:active{cursor:grabbing}
+        .todo-item.dragging{opacity:0.5;border:2px dashed #667eea;transform:scale(1.02);box-shadow:0 4px 12px rgba(0,0,0,0.15)}
         .todo-item:hover{border-color:#e9ecef}
         .todo-item.selected{background:#e3f2fd;border-color:#667eea}
         .todo-item.completed{opacity:0.6;background:#d4edda}
         
-        .drop-indicator {
-            height: 3px;
-            background: #667eea;
-            border-radius: 2px;
-            margin: 2px 0;
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none;
-        }
-        
-        .drop-indicator.active {
-            opacity: 1;
-        }
+        .drop-indicator{height:3px;background:#667eea;border-radius:2px;margin:2px 0;opacity:0;transition:opacity 0.2s;pointer-events:none}
+        .drop-indicator.active{opacity:1}
         
         .todo-header{display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.25rem}
         .todo-checkbox{margin-top:0.25rem;cursor:pointer;width:18px;height:18px;accent-color:#667eea}
         .todo-content{flex:1;min-width:0}
         .todo-text{font-size:0.875rem;color:#212529;line-height:1.4;word-break:break-word;white-space:pre-wrap}
         .todo-text.completed{text-decoration:line-through;color:#6c757d}
-        .todo-text ul, .todo-text ol{margin-left:1.2rem;margin-top:0.25rem;margin-bottom:0.25rem}
+        .todo-text ul,.todo-text ol{margin-left:1.2rem;margin-top:0.25rem;margin-bottom:0.25rem}
         
         .todo-actions{display:flex;gap:0.25rem;opacity:1}
         @media(min-width:768px){.todo-actions{opacity:0}.todo-item:hover .todo-actions{opacity:1}}
-        
         .todo-btn{width:28px;height:28px;border:none;background:transparent;color:#6c757d;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.8125rem}
         .todo-btn:hover{background:#e9ecef}
         .todo-btn.pdf{color:#ff6b6b}
@@ -249,7 +173,6 @@
         .section.hidden{display:none}
         .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;padding:0 0.5rem}
         .section-header h2{font-size:1rem;font-weight:700;color:#6c757d;display:flex;align-items:center;gap:0.5rem;margin:0}
-        
         .completed-section{background:#d4edda;border-color:#c3e6cb}
         .completed-section .section-header h2{color:#155724}
         
@@ -290,11 +213,9 @@
         
         .pdf-viewer{display:none;position:fixed;inset:0;background:#fff;z-index:2000;flex-direction:column}
         .pdf-viewer.active{display:flex}
-        .pdf-viewer-header{padding:1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e9ecef}
-        .pdf-container{flex:1;position:relative;background:#525659}
+        .pdf-viewer-header{padding:1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e9ecef;background:#f8f9fa}
+        .pdf-container{flex:1;position:relative;background:#fff}
         .pdf-container iframe{width:100%;height:100%;border:none;display:block}
-        .pdf-fallback{display:none;position:absolute;inset:0;background:#f8f9fa;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center}
-        .pdf-fallback.active{display:flex}
         
         @media (max-width: 768px) {
             .hide-mobile { display: none !important; }
@@ -305,7 +226,7 @@
             .zoom-controls { order: 4; width: 100%; justify-content: center; margin-top: 0.5rem; }
         }
         
-        #printFrame { position: absolute; left: -9999px; top: 0; width: 210mm; background: white; }
+        #printFrame { position: absolute; left: -9999px; top: 0; width: 0; height: 0; visibility: hidden; }
     </style>
 </head>
 <body>
@@ -489,28 +410,25 @@
         </div>
     </div>
 
+    <!-- PDF Viewer Modal -->
     <div class="pdf-viewer" id="pdfViewer">
         <div class="pdf-viewer-header">
             <div style="display:flex;align-items:center;gap:1rem">
                 <button class="btn-icon" onclick="closePdf()" title="Schließen"><i class="fas fa-arrow-left"></i></button>
-                <span id="pdfViewerTitle" style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">PDF Export</span>
+                <span id="pdfViewerTitle" style="font-weight:600;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">PDF Export</span>
             </div>
             <div style="display:flex;gap:0.5rem">
-                <button class="btn-app btn-secondary" onclick="downloadCurrentPdf()" style="background:#667eea;color:#fff">
+                <button class="btn-app btn-secondary" onclick="printPdf()" style="background:#28a745;color:#fff" title="Drucken">
+                    <i class="fas fa-print"></i> <span class="hide-mobile">Drucken</span>
+                </button>
+                <button class="btn-app btn-secondary" onclick="downloadPdf()" style="background:#667eea;color:#fff" title="Download">
                     <i class="fas fa-download"></i> <span class="hide-mobile">Speichern</span>
                 </button>
                 <button class="btn-icon" onclick="closePdf()" title="Schließen"><i class="fas fa-times"></i></button>
             </div>
         </div>
         <div class="pdf-container">
-            <iframe id="pdfFrame"></iframe>
-            <div class="pdf-fallback" id="pdfFallback">
-                <i class="fas fa-file-pdf" style="font-size:4rem;color:#ff6b6b;margin-bottom:1rem"></i>
-                <p style="color:#6c757d;margin-bottom:1rem">PDF kann nicht angezeigt werden</p>
-                <button class="btn-app btn-success" onclick="downloadCurrentPdf()">
-                    <i class="fas fa-download"></i> PDF Download
-                </button>
-            </div>
+            <iframe id="pdfFrame" name="pdfFrame"></iframe>
         </div>
     </div>
 
@@ -534,32 +452,13 @@
         let selectedTodos = new Set();
         let unsubscribe = null;
         let currentZoom = 1;
-        
-        // Drag & Drop Variablen
         let draggedItem = null;
-        let draggedBoardId = null;
-        let draggedIndex = null;
-        let currentPdfBlob = null;
+        let currentPdfContent = null;
 
-        // ZOOM FUNKTIONEN
-        window.zoomIn = () => {
-            if (currentZoom < 1.5) {
-                currentZoom += 0.1;
-                updateZoom();
-            }
-        };
-        
-        window.zoomOut = () => {
-            if (currentZoom > 0.5) {
-                currentZoom -= 0.1;
-                updateZoom();
-            }
-        };
-        
-        window.zoomReset = () => {
-            currentZoom = 1;
-            updateZoom();
-        };
+        // Zoom Funktionen
+        window.zoomIn = () => { if (currentZoom < 1.5) { currentZoom += 0.1; updateZoom(); }};
+        window.zoomOut = () => { if (currentZoom > 0.5) { currentZoom -= 0.1; updateZoom(); }};
+        window.zoomReset = () => { currentZoom = 1; updateZoom(); };
         
         function updateZoom() {
             document.documentElement.style.setProperty('--zoom', currentZoom);
@@ -569,10 +468,7 @@
         
         function loadZoom() {
             const saved = localStorage.getItem('boardflow_zoom');
-            if (saved) {
-                currentZoom = parseFloat(saved);
-                updateZoom();
-            }
+            if (saved) { currentZoom = parseFloat(saved); updateZoom(); }
         }
 
         onAuthStateChanged(auth, (user) => {
@@ -607,14 +503,12 @@
 
         window.handleLogin = async (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             const loading = document.getElementById('loginLoading');
             btn.disabled = true;
             loading.classList.add('active');
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPassword').value);
             } catch (error) {
                 alert('Login fehlgeschlagen: ' + error.message);
                 btn.disabled = false;
@@ -624,10 +518,7 @@
 
         window.handleRegister = async (e) => {
             e.preventDefault();
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
-            const confirm = document.getElementById('regPasswordConfirm').value;
-            if (password !== confirm) {
+            if (document.getElementById('regPassword').value !== document.getElementById('regPasswordConfirm').value) {
                 alert('Passwörter stimmen nicht überein');
                 return;
             }
@@ -636,7 +527,7 @@
             btn.disabled = true;
             loading.classList.add('active');
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                await createUserWithEmailAndPassword(auth, document.getElementById('regEmail').value, document.getElementById('regPassword').value);
                 await createDefaultBoards();
             } catch (error) {
                 alert('Registrierung fehlgeschlagen: ' + error.message);
@@ -652,17 +543,13 @@
         };
 
         async function createDefaultBoards() {
-            const defaultBoards = [
+            const defaults = [
                 { name: 'To Do', color: '#ff6b6b', section: 'main', todos: [], completedTodos: [], deletedTodos: [] },
                 { name: 'In Progress', color: '#4ecdc4', section: 'main', todos: [], completedTodos: [], deletedTodos: [] },
                 { name: 'Done', color: '#96ceb4', section: 'main', todos: [], completedTodos: [], deletedTodos: [] }
             ];
-            for (const board of defaultBoards) {
-                await addDoc(collection(db, 'boards'), {
-                    ...board,
-                    userId: currentUser.uid,
-                    createdAt: serverTimestamp()
-                });
+            for (const board of defaults) {
+                await addDoc(collection(db, 'boards'), { ...board, userId: currentUser.uid, createdAt: serverTimestamp() });
             }
         }
 
@@ -671,9 +558,7 @@
             const q = query(collection(db, 'boards'), where('userId', '==', currentUser.uid));
             unsubscribe = onSnapshot(q, async (snapshot) => {
                 boards = [];
-                snapshot.forEach(doc => {
-                    boards.push({ id: doc.id, ...doc.data() });
-                });
+                snapshot.forEach(doc => boards.push({ id: doc.id, ...doc.data() }));
                 await cleanupOldCompletedTodos();
                 render();
             });
@@ -683,19 +568,17 @@
             const now = new Date();
             for (const board of boards) {
                 if (!board.completedTodos) continue;
-                const validCompleted = [];
-                for (const todo of board.completedTodos) {
-                    const completedDate = new Date(todo.completedAt);
-                    const diffDays = Math.ceil(Math.abs(now - completedDate) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 30) validCompleted.push(todo);
-                }
-                if (validCompleted.length !== board.completedTodos.length) {
-                    await updateDoc(doc(db, 'boards', board.id), { completedTodos: validCompleted });
+                const valid = board.completedTodos.filter(t => {
+                    const days = Math.ceil(Math.abs(now - new Date(t.completedAt)) / (1000 * 60 * 60 * 24));
+                    return days <= 30;
+                });
+                if (valid.length !== board.completedTodos.length) {
+                    await updateDoc(doc(db, 'boards', board.id), { completedTodos: valid });
                 }
             }
         }
 
-        // DRAG & DROP FUNKTIONEN
+        // Drag & Drop
         window.handleDragStart = (e, boardId, index) => {
             draggedItem = { boardId, index };
             e.target.classList.add('dragging');
@@ -711,8 +594,6 @@
 
         window.handleDragOver = (e, boardId, index) => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            
             const indicator = document.getElementById(`indicator-${boardId}-${index}`);
             if (indicator) {
                 document.querySelectorAll('.drop-indicator').forEach(el => el.classList.remove('active'));
@@ -722,9 +603,7 @@
 
         window.handleBoardDragOver = (e, boardId) => {
             e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const board = document.querySelector(`[data-board-id="${boardId}"]`);
-            if (board) board.classList.add('drag-over');
+            document.querySelector(`[data-board-id="${boardId}"]`)?.classList.add('drag-over');
         };
 
         window.handleBoardDragLeave = (e) => {
@@ -734,170 +613,64 @@
         window.handleDrop = (e, targetBoardId, targetIndex) => {
             e.preventDefault();
             e.stopPropagation();
-            
             document.querySelectorAll('.drop-indicator').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.board').forEach(el => el.classList.remove('drag-over'));
             
             try {
-                const data = e.dataTransfer.getData('application/json');
-                if (!data) return;
-                
-                const parsed = JSON.parse(data);
-                moveTodo(parsed.boardId, parsed.index, targetBoardId, targetIndex);
-            } catch (err) {
-                console.error('Drop error:', err);
-            }
+                const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                if (data) moveTodo(data.boardId, data.index, targetBoardId, targetIndex);
+            } catch (err) { console.error('Drop error:', err); }
         };
 
         window.moveTodo = async (sourceBoardId, sourceIndex, targetBoardId, targetIndex) => {
-            // Finde die Boards
-            const sourceBoardIndex = boards.findIndex(b => b.id === sourceBoardId);
-            const targetBoardIndex = boards.findIndex(b => b.id === targetBoardId);
+            const sourceBoard = boards.find(b => b.id === sourceBoardId);
+            const targetBoard = boards.find(b => b.id === targetBoardId);
+            if (!sourceBoard || !targetBoard) return;
             
-            if (sourceBoardIndex === -1 || targetBoardIndex === -1) return;
-            
-            const sourceBoard = boards[sourceBoardIndex];
-            const targetBoard = boards[targetBoardIndex];
-            
-            // Hole das zu verschiebende Todo
             const sourceTodos = [...(sourceBoard.todos || [])];
             if (sourceIndex < 0 || sourceIndex >= sourceTodos.length) return;
             
             const [movedTodo] = sourceTodos.splice(sourceIndex, 1);
+            const targetTodos = sourceBoardId === targetBoardId ? sourceTodos : [...(targetBoard.todos || [])];
             
-            // Ziel-Todos vorbereiten
-            const targetTodos = targetBoardId === sourceBoardId ? sourceTodos : [...(targetBoard.todos || [])];
-            
-            // Berechne Einfügeposition
-            let insertIndex = targetIndex;
-            if (targetIndex === null || targetIndex === undefined) {
-                insertIndex = targetTodos.length;
-            }
-            
-            // Korrigiere Index wenn wir im gleichen Board verschieben und nach hinten ziehen
-            if (targetBoardId === sourceBoardId && sourceIndex < targetIndex) {
+            let insertIndex = targetIndex ?? targetTodos.length;
+            if (sourceBoardId === targetBoardId && sourceIndex < insertIndex) {
                 insertIndex = Math.max(0, insertIndex - 1);
             }
             
-            // Füge Todo ein
             targetTodos.splice(insertIndex, 0, movedTodo);
             
-            // Firebase Update
             try {
-                if (targetBoardId === sourceBoardId) {
-                    // Gleiches Board - nur ein Update
+                if (sourceBoardId === targetBoardId) {
                     await updateDoc(doc(db, 'boards', sourceBoardId), { todos: targetTodos });
                 } else {
-                    // Verschiedene Boards - zwei Updates
-                    await updateDoc(doc(db, 'boards', sourceBoardId), { todos: sourceTodos });
-                    await updateDoc(doc(db, 'boards', targetBoardId), { todos: targetTodos });
+                    await Promise.all([
+                        updateDoc(doc(db, 'boards', sourceBoardId), { todos: sourceTodos }),
+                        updateDoc(doc(db, 'boards', targetBoardId), { todos: targetTodos })
+                    ]);
                 }
             } catch (error) {
-                console.error('Move error:', error);
                 alert('Fehler beim Verschieben: ' + error.message);
-                render(); // Re-render bei Fehler
             }
         };
 
         function render() {
-            const main = document.getElementById('boardsContainer');
-            const ideas = document.getElementById('ideasContainer');
-            const notes = document.getElementById('notesContainer');
-            const completed = document.getElementById('completedContainer');
-            const trash = document.getElementById('trashContainer');
+            const containers = {
+                main: document.getElementById('boardsContainer'),
+                ideas: document.getElementById('ideasContainer'),
+                notes: document.getElementById('notesContainer'),
+                completed: document.getElementById('completedContainer'),
+                trash: document.getElementById('trashContainer')
+            };
             
-            main.innerHTML = '';
-            ideas.innerHTML = '';
-            notes.innerHTML = '';
-            completed.innerHTML = '';
-            trash.innerHTML = '';
+            Object.values(containers).forEach(c => c.innerHTML = '');
             
-            boards.filter(b => b.section === 'main').forEach(b => main.appendChild(createBoardEl(b)));
-            boards.filter(b => b.section === 'ideas').forEach(b => ideas.appendChild(createBoardEl(b)));
-            boards.filter(b => b.section === 'notes').forEach(b => notes.appendChild(createBoardEl(b)));
+            boards.filter(b => b.section === 'main').forEach(b => containers.main.appendChild(createBoardEl(b)));
+            boards.filter(b => b.section === 'ideas').forEach(b => containers.ideas.appendChild(createBoardEl(b)));
+            boards.filter(b => b.section === 'notes').forEach(b => containers.notes.appendChild(createBoardEl(b)));
             
-            const allCompletedTodos = [];
-            boards.forEach(board => {
-                if (board.completedTodos) {
-                    board.completedTodos.forEach((todo, idx) => {
-                        allCompletedTodos.push({...todo, boardId: board.id, boardName: board.name, index: idx});
-                    });
-                }
-            });
-            
-            if (allCompletedTodos.length > 0) {
-                const completedBoard = document.createElement('div');
-                completedBoard.className = 'board';
-                completedBoard.style.opacity = '0.9';
-                completedBoard.innerHTML = `
-                    <div class="board-header" style="background:#28a745">
-                        <h3>Erledigte Aufgaben (${allCompletedTodos.length})</h3>
-                    </div>
-                    <div class="board-todos">
-                        ${allCompletedTodos.map(t => `
-                            <div class="todo-item completed">
-                                <div class="todo-header">
-                                    <div class="todo-content" style="flex:1">
-                                        <div class="todo-text completed">${formatTextForDisplay(t.text)}</div>
-                                        <div style="font-size:0.75rem;color:#28a745;margin-top:0.5rem">
-                                            <i class="fas fa-check"></i> Erledigt: ${new Date(t.completedAt).toLocaleDateString('de-DE')} • ${escapeHtml(t.boardName)}
-                                        </div>
-                                    </div>
-                                    <div class="todo-actions">
-                                        <button class="todo-btn complete" onclick="uncompleteTodo('${t.boardId}', ${t.index})" title="Wiederherstellen">
-                                            <i class="fas fa-undo"></i>
-                                        </button>
-                                        <button class="todo-btn pdf" onclick="exportSinglePDF('${t.boardId}', ${t.index}, true)" title="PDF">
-                                            <i class="fas fa-file-pdf"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                completed.appendChild(completedBoard);
-            }
-            
-            const allDeletedTodos = [];
-            boards.forEach(board => {
-                if (board.deletedTodos) {
-                    board.deletedTodos.forEach((todo, idx) => {
-                        const deletedDate = new Date(todo.deletedAt);
-                        const diffDays = Math.ceil(Math.abs(new Date() - deletedDate) / (1000 * 60 * 60 * 24));
-                        if (diffDays <= 3) {
-                            allDeletedTodos.push({...todo, boardId: board.id, boardName: board.name, index: idx});
-                        }
-                    });
-                }
-            });
-            
-            if (allDeletedTodos.length > 0) {
-                const trashBoard = document.createElement('div');
-                trashBoard.className = 'board';
-                trashBoard.style.opacity = '0.8';
-                trashBoard.innerHTML = `
-                    <div class="board-header" style="background:#856404">
-                        <h3>Gelöschte Todos</h3>
-                    </div>
-                    <div class="board-todos">
-                        ${allDeletedTodos.map(t => `
-                            <div class="todo-item trash-item">
-                                <div class="todo-header">
-                                    <div class="todo-text">${formatTextForDisplay(t.text)}</div>
-                                    <button class="todo-btn restore-btn" onclick="restoreTodo('${t.boardId}', ${t.index})" title="Wiederherstellen">
-                                        <i class="fas fa-trash-restore"></i>
-                                    </button>
-                                </div>
-                                <div style="font-size:0.75rem;color:#856404;margin-top:0.5rem">
-                                    Aus: ${escapeHtml(t.boardName)} • Gelöscht: ${new Date(t.deletedAt).toLocaleDateString('de-DE')}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                trash.appendChild(trashBoard);
-            }
+            renderCompleted(containers.completed);
+            renderTrash(containers.trash);
         }
 
         function createBoardEl(board) {
@@ -913,14 +686,9 @@
             
             todos.forEach((t, idx) => {
                 const isSelected = selectedTodos.has(`${board.id}-${idx}`);
-                
-                // Drop-Indikator vor dem Todo
                 todosHtml += `<div class="drop-indicator" id="indicator-${board.id}-${idx}"></div>`;
-                
                 todosHtml += `
                 <div class="todo-item ${isSelected ? 'selected' : ''}" 
-                     data-board="${board.id}" 
-                     data-index="${idx}"
                      draggable="true"
                      ondragstart="handleDragStart(event, '${board.id}', ${idx})"
                      ondragend="handleDragEnd(event)"
@@ -945,16 +713,14 @@
                             ` : ''}
                         </div>
                         <div class="todo-actions">
-                            <button class="todo-btn complete" onclick="event.stopPropagation();markCompleted('${board.id}', ${idx})" title="Als erledigt markieren"><i class="fas fa-check"></i></button>
+                            <button class="todo-btn complete" onclick="event.stopPropagation();markCompleted('${board.id}', ${idx})" title="Erledigt"><i class="fas fa-check"></i></button>
                             <button class="todo-btn pdf" onclick="event.stopPropagation();exportSinglePDF('${board.id}', ${idx})" title="PDF"><i class="fas fa-file-pdf"></i></button>
                             <button class="todo-btn delete" onclick="event.stopPropagation();quickDeleteTodo('${board.id}', ${idx})" title="Löschen"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
             });
             
-            // Letzter Drop-Indikator (für Einfügen am Ende)
             todosHtml += `<div class="drop-indicator" id="indicator-${board.id}-${todos.length}"></div>`;
             
             div.innerHTML = `
@@ -965,12 +731,88 @@
                         <button onclick="event.stopPropagation();deleteBoard('${board.id}')" title="Löschen"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-                <div class="board-todos" id="todos-${board.id}">
+                <div class="board-todos">
                     ${todosHtml}
                     <button class="add-todo" onclick="addTodo('${board.id}')"><i class="fas fa-plus"></i> Todo hinzufügen</button>
-                </div>
-            `;
+                </div>`;
             return div;
+        }
+
+        function renderCompleted(container) {
+            const allCompleted = [];
+            boards.forEach(board => {
+                if (board.completedTodos) {
+                    board.completedTodos.forEach((todo, idx) => {
+                        allCompleted.push({...todo, boardId: board.id, boardName: board.name, index: idx});
+                    });
+                }
+            });
+            
+            if (allCompleted.length === 0) return;
+            
+            const div = document.createElement('div');
+            div.className = 'board';
+            div.style.opacity = '0.9';
+            div.innerHTML = `
+                <div class="board-header" style="background:#28a745">
+                    <h3>Erledigt (${allCompleted.length})</h3>
+                </div>
+                <div class="board-todos">
+                    ${allCompleted.map(t => `
+                        <div class="todo-item completed">
+                            <div class="todo-header">
+                                <div class="todo-content" style="flex:1">
+                                    <div class="todo-text completed">${formatTextForDisplay(t.text)}</div>
+                                    <div style="font-size:0.75rem;color:#28a745;margin-top:0.5rem">
+                                        <i class="fas fa-check"></i> ${new Date(t.completedAt).toLocaleDateString('de-DE')} • ${escapeHtml(t.boardName)}
+                                    </div>
+                                </div>
+                                <div class="todo-actions">
+                                    <button class="todo-btn complete" onclick="uncompleteTodo('${t.boardId}', ${t.index})" title="Wiederherstellen"><i class="fas fa-undo"></i></button>
+                                    <button class="todo-btn pdf" onclick="exportSinglePDF('${t.boardId}', ${t.index}, true)" title="PDF"><i class="fas fa-file-pdf"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+            container.appendChild(div);
+        }
+
+        function renderTrash(container) {
+            const allDeleted = [];
+            const now = new Date();
+            boards.forEach(board => {
+                if (board.deletedTodos) {
+                    board.deletedTodos.forEach((todo, idx) => {
+                        const days = Math.ceil(Math.abs(now - new Date(todo.deletedAt)) / (1000 * 60 * 60 * 24));
+                        if (days <= 3) allDeleted.push({...todo, boardId: board.id, boardName: board.name, index: idx});
+                    });
+                }
+            });
+            
+            if (allDeleted.length === 0) return;
+            
+            const div = document.createElement('div');
+            div.className = 'board';
+            div.style.opacity = '0.8';
+            div.innerHTML = `
+                <div class="board-header" style="background:#856404">
+                    <h3>Papierkorb (${allDeleted.length})</h3>
+                </div>
+                <div class="board-todos">
+                    ${allDeleted.map(t => `
+                        <div class="todo-item trash-item">
+                            <div class="todo-header">
+                                <div class="todo-text">${formatTextForDisplay(t.text)}</div>
+                                <button class="todo-btn restore-btn" onclick="restoreTodo('${t.boardId}', ${t.index})" title="Wiederherstellen"><i class="fas fa-trash-restore"></i></button>
+                            </div>
+                            <div style="font-size:0.75rem;color:#856404;margin-top:0.5rem">
+                                ${escapeHtml(t.boardName)} • ${new Date(t.deletedAt).toLocaleDateString('de-DE')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+            container.appendChild(div);
         }
 
         function escapeHtml(text) {
@@ -981,14 +823,12 @@
         }
 
         function formatTextForDisplay(text) {
-            if (!text) return '';
-            return text;
+            return text || '';
         }
 
         window.toggleTodoSelection = (boardId, index, checked) => {
             const key = `${boardId}-${index}`;
-            if (checked) selectedTodos.add(key);
-            else selectedTodos.delete(key);
+            checked ? selectedTodos.add(key) : selectedTodos.delete(key);
             updateBatchActions();
             render();
         };
@@ -1024,10 +864,9 @@
             const board = boards.find(b => b.id === boardId);
             if (!board) return;
             const todos = [...(board.todos || [])];
-            const completedTodo = todos[index];
-            todos.splice(index, 1);
+            const completed = todos.splice(index, 1)[0];
             const completedTodos = [...(board.completedTodos || [])];
-            completedTodos.push({...completedTodo, completedAt: new Date().toISOString()});
+            completedTodos.push({...completed, completedAt: new Date().toISOString()});
             await updateDoc(doc(db, 'boards', boardId), { todos, completedTodos });
         };
 
@@ -1035,8 +874,7 @@
             const board = boards.find(b => b.id === boardId);
             if (!board) return;
             const completedTodos = [...(board.completedTodos || [])];
-            const todo = completedTodos[index];
-            completedTodos.splice(index, 1);
+            const todo = completedTodos.splice(index, 1)[0];
             const todos = [...(board.todos || [])];
             todos.push({...todo, restoredFromCompleted: new Date().toISOString()});
             await updateDoc(doc(db, 'boards', boardId), { todos, completedTodos });
@@ -1056,10 +894,9 @@
             const board = boards.find(b => b.id === boardId);
             if (!board) return;
             const todos = [...(board.todos || [])];
-            const deletedTodo = todos[index];
-            todos.splice(index, 1);
+            const deleted = todos.splice(index, 1)[0];
             const deletedTodos = [...(board.deletedTodos || [])];
-            deletedTodos.push({...deletedTodo, deletedAt: new Date().toISOString()});
+            deletedTodos.push({...deleted, deletedAt: new Date().toISOString()});
             await updateDoc(doc(db, 'boards', boardId), { todos, deletedTodos });
         }
 
@@ -1072,10 +909,9 @@
             const board = boards.find(b => b.id === boardId);
             if (!board) return;
             const deletedTodos = [...(board.deletedTodos || [])];
-            const restoredTodo = deletedTodos[index];
-            deletedTodos.splice(index, 1);
+            const restored = deletedTodos.splice(index, 1)[0];
             const todos = [...(board.todos || [])];
-            todos.push({...restoredTodo, restoredAt: new Date().toISOString()});
+            todos.push({...restored, restoredAt: new Date().toISOString()});
             await updateDoc(doc(db, 'boards', boardId), { todos, deletedTodos });
         };
 
@@ -1111,11 +947,7 @@
                     await updateDoc(doc(db, 'boards', editingBoardId), data);
                 } else {
                     await addDoc(collection(db, 'boards'), {
-                        ...data,
-                        todos: [],
-                        completedTodos: [],
-                        deletedTodos: [],
-                        createdAt: serverTimestamp()
+                        ...data, todos: [], completedTodos: [], deletedTodos: [], createdAt: serverTimestamp()
                     });
                 }
                 closeModal('boardModal');
@@ -1193,11 +1025,11 @@
             closeModal('todoModal');
         };
 
-        // PDF FUNKTIONEN - Im Viewer anzeigen
+        // PDF FUNKTIONEN - KORRIGIERT
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
-            await showPdfInViewer([{...todo, boardName: board.name}]);
+            showPdfInViewer([{...todo, boardName: board.name}]);
         };
 
         window.exportCurrentTodoPDF = async () => {
@@ -1205,7 +1037,7 @@
             const board = boards.find(b => b.id === currentBoardId);
             const todo = editingTodoId !== null ? board.todos[editingTodoId] : null;
             if (!todo) return;
-            await showPdfInViewer([{...todo, boardName: board.name}]);
+            showPdfInViewer([{...todo, boardName: board.name}]);
         };
 
         window.exportSelectedPDFs = async () => {
@@ -1216,16 +1048,18 @@
                 const todo = board.todos[parseInt(index)];
                 selectedData.push({...todo, boardName: board.name});
             }
-            await showPdfInViewer(selectedData);
+            showPdfInViewer(selectedData);
             selectedTodos.clear();
             updateBatchActions();
             render();
         };
 
-        async function showPdfInViewer(todos) {
+        function showPdfInViewer(todos) {
             let html = `
+                <!DOCTYPE html>
                 <html>
                 <head>
+                    <meta charset="UTF-8">
                     <title>BoardFlow Export</title>
                     <style>
                         @page { margin: 20mm; size: auto; }
@@ -1265,7 +1099,7 @@
                         .todo-box:last-child {
                             margin-bottom: 0;
                         }
-                        .todo-header {
+                        .todo-meta {
                             font-size: 12px;
                             color: #6c757d;
                             margin-bottom: 10px;
@@ -1281,9 +1115,6 @@
                             margin-left: 20px;
                             padding-left: 0;
                         }
-                        .todo-content li {
-                            margin-bottom: 5px;
-                        }
                         .attachments {
                             margin-top: 15px;
                             padding-top: 15px;
@@ -1292,9 +1123,9 @@
                             color: #6c757d;
                         }
                         @media print {
-                            body { background: white; margin: 0; }
-                            .todo-box { break-inside: avoid; box-shadow: none; border: 1px solid #dee2e6; }
-                            .header { border-bottom: 2px solid #667eea; }
+                            body { background: white; padding: 0; }
+                            .todo-box { box-shadow: none; border: 1px solid #dee2e6; break-inside: avoid; }
+                            .no-print { display: none; }
                         }
                     </style>
                 </head>
@@ -1306,21 +1137,20 @@
             `;
             
             todos.forEach((todo) => {
-                let textContent = todo.text
-                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+                let textContent = (todo.text || '').replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
                 
                 html += `
                     <div class="todo-box">
-                        <div class="todo-header">
-                            Board: ${escapeHtml(todo.boardName)} | 
-                            Erstellt: ${new Date(todo.createdAt).toLocaleDateString('de-DE')}
+                        <div class="todo-meta">
+                            <strong>Board:</strong> ${escapeHtml(todo.boardName)} | 
+                            <strong>Erstellt:</strong> ${new Date(todo.createdAt).toLocaleDateString('de-DE')}
                         </div>
                         <div class="todo-content">
                             ${textContent}
                         </div>
                         ${todo.attachments?.length ? `
                             <div class="attachments">
-                                Anhänge: ${todo.attachments.length}
+                                <i class="fas fa-paperclip"></i> ${todo.attachments.length} Anhang/Anhänge
                             </div>
                         ` : ''}
                     </div>
@@ -1329,17 +1159,26 @@
             
             html += '</body></html>';
             
-            // Erstelle Blob und zeige im Viewer an
-            currentPdfBlob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(currentPdfBlob);
+            // Speichere den Content für Download/Print
+            currentPdfContent = html;
             
-            document.getElementById('pdfFrame').src = url;
+            // Zeige im Viewer an
+            const iframe = document.getElementById('pdfFrame');
+            iframe.srcdoc = html;
             document.getElementById('pdfViewer').classList.add('active');
         }
 
-        window.downloadCurrentPdf = () => {
-            if (!currentPdfBlob) return;
-            const url = URL.createObjectURL(currentPdfBlob);
+        window.printPdf = () => {
+            const iframe = document.getElementById('pdfFrame');
+            if (iframe.contentWindow) {
+                iframe.contentWindow.print();
+            }
+        };
+
+        window.downloadPdf = () => {
+            if (!currentPdfContent) return;
+            const blob = new Blob([currentPdfContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `BoardFlow-Export-${new Date().toISOString().split('T')[0]}.html`;
@@ -1347,6 +1186,12 @@
             a.click();
             document.body.removeChild(a);
             setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+
+        window.closePdf = () => {
+            document.getElementById('pdfViewer').classList.remove('active');
+            document.getElementById('pdfFrame').srcdoc = '';
+            currentPdfContent = null;
         };
 
         window.handleFile = (input) => {
@@ -1376,42 +1221,21 @@
         };
 
         window.openAttachment = async (url, name) => {
-            try {
-                if (name.toLowerCase().endsWith('.pdf')) {
-                    let displayUrl = url;
-                    if (url.startsWith('data:')) {
-                        displayUrl = await dataUrlToBlobUrl(url);
-                    }
-                    document.getElementById('pdfViewerTitle').textContent = name;
-                    document.getElementById('pdfFrame').src = displayUrl;
-                    document.getElementById('pdfViewer').classList.add('active');
-                    currentPdfBlob = null;
+            if (name.toLowerCase().endsWith('.pdf')) {
+                document.getElementById('pdfViewerTitle').textContent = name;
+                const iframe = document.getElementById('pdfFrame');
+                if (url.startsWith('data:')) {
+                    const res = await fetch(url);
+                    const blob = await res.blob();
+                    iframe.src = URL.createObjectURL(blob);
                 } else {
-                    window.open(url, '_blank');
+                    iframe.src = url;
                 }
-            } catch (error) {
-                console.error('Fehler:', error);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = name;
-                a.click();
+                document.getElementById('pdfViewer').classList.add('active');
+                currentPdfContent = null; // Kein eigener Content, nur Anzeige
+            } else {
+                window.open(url, '_blank');
             }
-        };
-
-        async function dataUrlToBlobUrl(dataUrl) {
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
-            return URL.createObjectURL(blob);
-        }
-
-        window.closePdf = () => {
-            const frame = document.getElementById('pdfFrame');
-            if (frame.src && frame.src.startsWith('blob:')) {
-                URL.revokeObjectURL(frame.src);
-            }
-            document.getElementById('pdfViewer').classList.remove('active');
-            frame.src = 'about:blank';
-            currentPdfBlob = null;
         };
 
         window.selectColor = (btn, color) => {
@@ -1457,15 +1281,12 @@
         window.toggleSection = (section) => {
             const sectionEl = document.getElementById(section + 'Section');
             const btn = document.getElementById('btn-' + section);
-            
             sectionEl.classList.toggle('hidden');
-            
             if (sectionEl.classList.contains('hidden')) {
                 btn.classList.remove('active', 'active-ideas', 'active-notes', 'active-completed', 'active-trash');
             } else {
                 btn.classList.add('active', 'active-' + section);
             }
-            
             saveSectionStates();
         };
 
@@ -1473,7 +1294,6 @@
             ['ideas', 'notes', 'completed', 'trash'].forEach(section => {
                 const sectionEl = document.getElementById(section + 'Section');
                 const btn = document.getElementById('btn-' + section);
-                
                 if (sectionEl && btn) {
                     if (!sectionEl.classList.contains('hidden')) {
                         btn.classList.add('active', 'active-' + section);
