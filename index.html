@@ -126,8 +126,21 @@
         }
         
         .main-content{padding:1rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
-        .boards-container{display:flex;gap:1rem;min-width:fit-content;padding-bottom:1rem}
-        .board{background:#fff;border-radius:16px;min-width:300px;width:100%;max-width:100%;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.08);flex:1}
+        .boards-container{display:flex;gap:1rem;min-width:fit-content;padding-bottom:1rem;align-items:flex-start}
+        
+        /* BOARD ANPASSUNG: Wächst automatisch mit Inhalten, kein Scroll */
+        .board{
+            background:#fff;
+            border-radius:16px;
+            min-width:300px;
+            width:100%;
+            max-width:100%;
+            display:flex;
+            flex-direction:column;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            height:fit-content; /* WICHTIG: Passt sich dem Inhalt an */
+        }
+        
         @media(min-width:768px){
             .board{min-width:400px;width:400px}
         }
@@ -137,7 +150,16 @@
         .board-actions{display:flex;gap:0.25rem}
         .board-actions button{width:28px;height:28px;border-radius:6px;border:none;background:rgba(255,255,255,0.25);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.75rem}
         
-        .board-todos{flex:1;overflow-y:auto;padding:0.75rem;display:flex;flex-direction:column;gap:0.5rem;max-height:60vh}
+        /* BOARD-TODOS ANPASSUNG: Keine max-height, kein overflow-y:auto */
+        .board-todos{
+            padding:0.75rem;
+            display:flex;
+            flex-direction:column;
+            gap:0.5rem;
+            /* flex:1 entfernt */
+            /* overflow-y:auto entfernt */
+            /* max-height:60vh entfernt */
+        }
         
         .todo-item{background:#f8f9fa;border-radius:12px;padding:0.75rem;border:2px solid transparent;transition:all 0.2s;position:relative}
         .todo-item:hover{border-color:#e9ecef}
@@ -462,7 +484,7 @@
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('app').classList.add('active');
                 loadBoards();
-                loadSectionStates(); // Gespeicherte Zustände laden
+                loadSectionStates();
                 updateHeaderButtonStates();
             } else {
                 currentUser = null;
@@ -946,7 +968,7 @@
             closeModal('todoModal');
         };
 
-        // BEREINIGTE PDF FUNKTIONEN - Nur ToDos, kein Datum/Header/Footer
+        // PDF FUNKTIONEN - Nur ToDos in Kästen
         window.exportSinglePDF = async (boardId, index, isCompleted = false) => {
             const board = boards.find(b => b.id === boardId);
             const todo = isCompleted ? board.completedTodos[index] : board.todos[index];
@@ -1175,25 +1197,21 @@
             }
         }
 
-        // KORRIGIERTE toggleSection Funktion mit Speicherung
         window.toggleSection = (section) => {
             const sectionEl = document.getElementById(section + 'Section');
             const btn = document.getElementById('btn-' + section);
             
             sectionEl.classList.toggle('hidden');
             
-            // Button State aktualisieren
             if (sectionEl.classList.contains('hidden')) {
                 btn.classList.remove('active', 'active-ideas', 'active-notes', 'active-completed', 'active-trash');
             } else {
                 btn.classList.add('active', 'active-' + section);
             }
             
-            // In localStorage speichern
             saveSectionStates();
         };
 
-        // Funktion zum Initialisieren der Button-States beim Laden
         function updateHeaderButtonStates() {
             ['ideas', 'notes', 'completed', 'trash'].forEach(section => {
                 const sectionEl = document.getElementById(section + 'Section');
